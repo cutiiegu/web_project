@@ -11,12 +11,12 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Навигация -->
     <nav class="navbar">
         <div class="container navbar-container">
             <a href="#" class="logo">Sweet Moments</a>
             
             <div class="auth-links">
+                <a href="#" id="ordersLink" class="auth-link" style="display: none; margin-right: 15px;"><i class="fas fa-shopping-bag"></i> Мои заказы</a>
                 <a href="#" id="loginLink" class="auth-link">Войти</a>
                 <a href="admin.php" class="auth-link">Админка</a>
             </div>
@@ -24,231 +24,105 @@
             <ul class="nav-menu nav-desktop">
                 <li class="nav-item"><a href="#home" class="nav-link">Главная</a></li>
                 <li class="nav-item"><a href="#about" class="nav-link">О нас</a></li>
-                <li class="nav-item dropdown">
-                    <a href="#desserts" class="nav-link">Десерты <i class="fas fa-chevron-down"></i></a>
-                    <ul class="dropdown-menu">
-                        <li><a href="#" class="dropdown-item">Торты</a></li>
-                        <li><a href="#" class="dropdown-item">Пирожные</a></li>
-                        <li><a href="#" class="dropdown-item">Макаруны</a></li>
-                        <li><a href="#" class="dropdown-item">Капкейки</a></li>
-                    </ul>
-                </li>
-                <li class="nav-item"><a href="#faq" class="nav-link">Вопросы</a></li>
-                <li class="nav-item"><a href="#benefits" class="nav-link">Преимущества</a></li>
-                <li class="nav-item"><a href="#order" class="nav-link">Заказать</a></li>
+                <li class="nav-item"><a href="#catalog" class="nav-link">Каталог</a></li>
+                <li class="nav-item"><a href="#order" class="nav-link">Заказ</a></li>
             </ul>
             
             <button class="menu-toggle" id="menuToggle">
                 <i class="fas fa-bars"></i>
             </button>
-            
-            <div class="nav-mobile" id="navMobile">
-                <button class="close-menu" id="closeMenu"><i class="fas fa-times"></i></button>
-                <ul class="nav-menu">
-                    <li class="nav-item"><a href="#home" class="nav-link">Главная</a></li>
-                    <li class="nav-item"><a href="#about" class="nav-link">О нас</a></li>
-                    <li class="nav-item mobile-dropdown-item">
-                        <div class="mobile-dropdown-toggle nav-link">
-                            <span>Десерты</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </div>
-                        <ul class="mobile-dropdown">
-                            <li><a href="#" class="dropdown-item">Торты</a></li>
-                            <li><a href="#" class="dropdown-item">Пирожные</a></li>
-                            <li><a href="#" class="dropdown-item">Макаруны</a></li>
-                            <li><a href="#" class="dropdown-item">Капкейки</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item"><a href="#faq" class="nav-link">Вопросы</a></li>
-                    <li class="nav-item"><a href="#benefits" class="nav-link">Преимущества</a></li>
-                    <li class="nav-item"><a href="#order" class="nav-link">Заказать</a></li>
-                </ul>
-                <a href="#order" class="btn mobile-menu-btn">Сделать заказ</a>
-            </div>
         </div>
     </nav>
-    
-    <!-- Шапка с видео -->
-    <header id="home">
-        <div class="video-container">
-            <video class="video-background" autoplay muted loop playsinline>
-                <source src="VideoProject1.mp4" type="video/mp4">
-            </video>
-        </div>
-        <div class="video-overlay"></div>
-        <div class="container header-content">
-            <h1>Сладкие моменты с нами</h1>
-            <p>Авторские десерты ручной работы из натуральных ингредиентов. Создаем сладкие воспоминания для ваших праздников.</p>
-            <a href="#order" class="btn btn-secondary">Заказать десерт</a>
+
+    <div class="nav-mobile" id="navMobile">
+        <button class="close-menu" id="closeMenu">&times;</button>
+        <ul class="nav-menu-mobile">
+            <li class="nav-item"><a href="#home" class="nav-link">Главная</a></li>
+            <li class="nav-item"><a href="#about" class="nav-link">О нас</a></li>
+            <li class="nav-item"><a href="#catalog" class="nav-link">Каталог</a></li>
+            <li class="nav-item"><a href="#order" class="nav-link">Заказ</a></li>
+        </ul>
+    </div>
+
+    <header class="header" id="home">
+        <div class="container header-container">
+            <div class="header-content">
+                <h1>Эксклюзивные торты и десерты на заказ</h1>
+                <p>Натуральные ингредиенты, уникальный дизайн и любовь в каждом кусочке.</p>
+                <a href="#order" class="btn">Заказать шедевр</a>
+            </div>
         </div>
     </header>
-    
-    <!-- Секция "О нас" -->
-    <section id="about">
+
+    <section class="section" id="about">
         <div class="container">
-            <h2>О нашей кондитерской</h2>
+            <h2 class="section-title">О нашей кондитерской</h2>
             <div class="about-content">
                 <div class="about-text">
-                    <p>Sweet Moments — это команда профессиональных кондитеров с более чем 10-летним опытом создания неповторимых десертов. Мы превращаем обычные сладости в произведения искусства.</p>
-                    <p>Каждый наш десерт создается с любовью и вниманием к деталям. Мы используем только натуральные ингредиенты: свежие ягоды, бельгийский шоколад, французское сливочное масло.</p>
-                    <p>Мы не просто делаем десерты — мы создаем эмоции и запоминающиеся моменты для вас и ваших близких.</p>
-                    <a href="#order" class="btn">Сделать заказ</a>
-                </div>
-                <div class="about-image"><img src="start.jpg" alt="Макаруны"></div>
-            </div>
-        </div>
-    </section>
-    
-    <!-- Слайдер -->
-    <section id="desserts" class="slider-section">
-        <div class="container">
-            <h2>Наши десерты</h2>
-            <div class="slider-container">
-                <div class="slider" id="slider">
-                    <div class="slide">
-                        <img src="ChocoCake.jpeg" alt="Шоколадный торт">
-                        <div class="slide-content">
-                            <h3>Шоколадный торт "Нежность"</h3>
-                            <p>Нежный бисквит, крем из бельгийского шоколада, свежие ягоды. Вес: 2 кг.</p>
-                            <a href="#order" class="btn btn-small">Заказать</a>
-                        </div>
-                    </div>
-                    <div class="slide">
-                        <img src="Macaron.jpg" alt="Макаруны">
-                        <div class="slide-content">
-                            <h3>Макаруны ассорти</h3>
-                            <p>Нежные французские макаруны 8 вкусов: малина, фисташка, соленая карамель, ваниль.</p>
-                            <a href="#order" class="btn btn-small">Заказать</a>
-                        </div>
-                    </div>
-                    <div class="slide">
-                        <img src="CupCake.jpg" alt="Капкейки">
-                        <div class="slide-content">
-                            <h3>Капкейки "Праздник"</h3>
-                            <p>Набор из 12 капкейков с разными начинками и декором. Идеально для детского праздника.</p>
-                            <a href="#order" class="btn btn-small">Заказать</a>
-                        </div>
-                    </div>
-                    <div class="slide">
-                        <img src="RedCake.jpg" alt="Красный бархат">
-                        <div class="slide-content">
-                            <h3>Торт "Красный бархат"</h3>
-                            <p>Классический американский торт с крем-чизом. Яркий цвет и невероятный вкус.</p>
-                            <a href="#order" class="btn btn-small">Заказать</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="slider-controls">
-                <button class="slider-prev" id="sliderPrev"><i class="fas fa-chevron-left"></i></button>
-                <div class="slider-dots" id="sliderDots"></div>
-                <button class="slider-next" id="sliderNext"><i class="fas fa-chevron-right"></i></button>
-            </div>
-        </div>
-    </section>
-    
-    <!-- FAQ -->
-    <section id="faq" class="faq-section">
-        <div class="container">
-            <h2>Частые вопросы</h2>
-            <div class="faq-container">
-                <div class="faq-item">
-                    <div class="faq-question"><h3>Как сделать заказ?</h3><i class="fas fa-chevron-down"></i></div>
-                    <div class="faq-answer"><p>Вы можете сделать заказ через форму на сайте, по телефону +7 (999) 123-45-67 или в нашем Instagram. Для тортов рекомендуем заказывать за 3-5 дней до мероприятия.</p></div>
-                </div>
-                <div class="faq-item">
-                    <div class="faq-question"><h3>Можно ли изменить дизайн десерта?</h3><i class="fas fa-chevron-down"></i></div>
-                    <div class="faq-answer"><p>Да, мы создаем десерты по вашим эскизам и пожеланиям. Пришлите нам фото или описание того, что хотите, и наш кондитер предложит варианты реализации.</p></div>
-                </div>
-                <div class="faq-item">
-                    <div class="faq-question"><h3>Есть ли доставка?</h3><i class="fas fa-chevron-down"></i></div>
-                    <div class="faq-answer"><p>Да, мы осуществляем доставку по городу. Стоимость доставки зависит от района. Также вы можете забрать заказ самостоятельно из нашей кондитерской.</p></div>
-                </div>
-                <div class="faq-item">
-                    <div class="faq-question"><h3>Какие ингредиенты вы используете?</h3><i class="fas fa-chevron-down"></i></div>
-                    <div class="faq-answer"><p>Мы используем только натуральные ингредиенты: бельгийский шоколад, французское сливочное масло, итальянскую муку, свежие ягоды и фрукты. Без консервантов и искусственных красителей.</p></div>
+                    <p>Мы создаем не просто десерты, а настоящие съедобные эмоции для ваших самых важных моментов. Каждый торт, капкейк или макарон изготавливается вручную исключительно из свежих и качественных продуктов.</p>
+                    <p>Никаких искусственных ароматизаторов и растительных сливок — только настоящее сливочное масло, бельгийский шоколад и спелые ягоды.</p>
                 </div>
             </div>
         </div>
     </section>
-    
-    <!-- Преимущества -->
-    <section id="benefits" class="benefits-section">
+
+    <section class="section section-light" id="order">
         <div class="container">
-            <h2>Наши преимущества</h2>
-            <div class="benefits-container">
-                <div class="benefit-item"><div class="benefit-logo"><i class="fas fa-leaf"></i></div><h3>Натуральные ингредиенты</h3><p>Используем только качественные и свежие продукты</p></div>
-                <div class="benefit-item"><div class="benefit-logo"><i class="fas fa-award"></i></div><h3>Опытные кондитеры</h3><p>Команда профессионалов с 10-летним опытом</p></div>
-                <div class="benefit-item"><div class="benefit-logo"><i class="fas fa-shipping-fast"></i></div><h3>Быстрая доставка</h3><p>Доставим ваш заказ в течение 2-х часов</p></div>
-                <div class="benefit-item"><div class="benefit-logo"><i class="fas fa-palette"></i></div><h3>Индивидуальный дизайн</h3><p>Создаем десерты по вашим эскизам</p></div>
-                <div class="benefit-item"><div class="benefit-logo"><i class="fas fa-heart"></i></div><h3>С любовью</h3><p>Каждый десерт создается с заботой и вниманием</p></div>
-                <div class="benefit-item"><div class="benefit-logo"><i class="fas fa-clock"></i></div><h3>Срочные заказы</h3><p>Возможность изготовления за 24 часа</p></div>
-            </div>
-        </div>
-    </section>
-    
-    <!-- Форма заказа -->
-    <section id="order" class="form-section">
-        <div class="container">
-            <h2>Заказать десерт</h2>
-            <p class="section-subtitle">Заполните форму ниже, и наш кондитер свяжется с вами для уточнения деталей</p>
-            
+            <h2 class="section-title">Оставить заявку на расчет</h2>
             <div class="form-container">
-                <form method="POST" action="/web_project/api/application" id="orderForm">
+                <form id="orderForm">
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="name" class="form-label">Имя *</label>
-                            <input type="text" id="name" name="name" class="form-control" required>
+                            <label for="name">Ваше имя *</label>
+                            <input type="text" id="name" name="name" class="form-control" required placeholder="Иван">
                         </div>
                         <div class="form-group">
-                            <label for="phone" class="form-label">Телефон *</label>
-                            <input type="tel" id="phone" name="phone" class="form-control" required>
+                            <label for="phone">Телефон *</label>
+                            <input type="tel" id="phone" name="phone" class="form-control" required placeholder="+7 (999) 123-45-67">
                         </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" id="email" name="email" class="form-control">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="dessert" class="form-label">Выберите десерт</label>
-                        <select id="dessert" name="dessert" class="form-control">
-                            <option value="">Выберите десерт</option>
-                            <option value="chocolate-cake">Шоколадный торт "Нежность"</option>
-                            <option value="macarons">Макаруны ассорти</option>
-                            <option value="cupcakes">Капкейки "Праздник"</option>
-                            <option value="red-velvet">Торт "Красный бархат"</option>
-                            <option value="other">Другой вариант</option>
-                        </select>
                     </div>
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="date" class="form-label">Дата получения</label>
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" class="form-control" placeholder="example@mail.ru">
+                        </div>
+                        <div class="form-group">
+                            <label for="dessert">Что вас интересует?</label>
+                            <select id="dessert" name="dessert" class="form-control">
+                                <option value="">Выберите десерт</option>
+                                <option value="Торт">Свадебный или праздничный торт</option>
+                                <option value="Капкейки">Набор капкейков</option>
+                                <option value="Бенто">Бенто-торт</option>
+                                <option value="Другое">Другое (напишите в пожеланиях)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="date">Дата мероприятия</label>
                             <input type="date" id="date" name="date" class="form-control">
                         </div>
                         <div class="form-group">
-                            <label for="servings" class="form-label">Количество персон</label>
-                            <input type="number" id="servings" name="servings" class="form-control" min="1" max="50" placeholder="Например: 10">
+                            <label for="servings">Количество гостей (персон)</label>
+                            <input type="number" id="servings" name="servings" class="form-control" min="1" max="50" placeholder="10">
                         </div>
                     </div>
                     
                     <div class="form-group">
-                        <label for="message" class="form-label">Пожелания к заказу</label>
-                        <textarea id="message" name="message" class="form-control" rows="4" placeholder="Опишите ваш десерт, укажите особенности дизайна, аллергии и т.д."></textarea>
+                        <label for="message">Пожелания к дизайну или начинке</label>
+                        <textarea id="message" name="message" class="form-control" rows="4" placeholder="Например: Шоколадный бисквит, ягодная начинка, нежно-розовый крем..."></textarea>
                     </div>
                     
-                    <button type="submit" class="btn" id="submitBtn">Отправить заявку</button>
-                    
-                    <div class="form-message" id="formMessage"></div>
+                    <button type="submit" class="btn btn-block">Отправить заявку</button>
                 </form>
+                <div id="formMessage"></div>
             </div>
         </div>
     </section>
-    
-    <!-- Футер -->
-    <footer>
+
+    <footer class="footer">
         <div class="container">
             <div class="footer-content">
                 <h3>Sweet Moments</h3>
@@ -260,14 +134,13 @@
                 </div>
                 <p>Телефон: +7 (999) 123-45-67<br>Email: order@sweet-moments.ru</p>
             </div>
-            <div class="copyright">&copy; 2025 Sweet Moments. Все права защищены.</div>
+            <div class="copyright">&copy; 2026 Sweet Moments. Все права защищены.</div>
         </div>
     </footer>
     
-    <!-- Модальное окно для входа -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
-            <span class="close">&times;</span>
+            <span class="close" id="closeLoginModal">&times;</span>
             <h3>Вход в личный кабинет</h3>
             <form id="userLoginForm">
                 <div class="form-group">
@@ -281,6 +154,47 @@
                 <button type="submit" class="btn">Войти</button>
             </form>
             <div id="loginMessage"></div>
+        </div>
+    </div>
+
+    <div id="ordersModal" class="modal">
+        <div class="modal-content modal-large">
+            <span class="close" id="closeOrdersModal">&times;</span>
+            <h3><i class="fas fa-cookie-bite"></i> Ваши заказы</h3>
+            <div id="userOrdersList">
+                </div>
+        </div>
+    </div>
+
+    <div id="editOrderModal" class="modal" style="z-index: 1200;">
+        <div class="modal-content">
+            <span class="close" id="closeEditModal">&times;</span>
+            <h3>Редактирование заказа</h3>
+            <form id="editOrderForm">
+                <input type="hidden" id="editOrderId">
+                <div class="form-group">
+                    <label>Имя:</label>
+                    <input type="text" id="editName" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Телефон:</label>
+                    <input type="text" id="editPhone" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" id="editEmail" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Количество персон:</label>
+                    <input type="number" id="editServings" class="form-control" min="1" max="50">
+                </div>
+                <div class="form-group">
+                    <label>Пожелания к заказу:</label>
+                    <textarea id="editMessage" class="form-control" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn">Сохранить изменения</button>
+            </form>
+            <div id="editMessageDiv"></div>
         </div>
     </div>
     
