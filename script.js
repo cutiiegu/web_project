@@ -200,7 +200,7 @@ if (orderForm) {
                 // credentials остаются на экране (не исчезают)
                 if (result.credentials) {
                     messageText = '<div class="credentials-message">';
-                    messageText += '<strong>✅ Заказ успешно отправлен!</strong><br><br>';
+                    messageText += '<strong> Заказ успешно отправлен!</strong><br><br>';
                     messageText += '<strong>Сохраните данные для входа:</strong><br>';
                     messageText += 'Логин: <strong>' + result.credentials.login + '</strong><br>';
                     messageText += 'Пароль: <strong>' + result.credentials.password + '</strong><br><br>';
@@ -211,8 +211,7 @@ if (orderForm) {
                 if (formMessage) {
                     formMessage.innerHTML = messageText;
                     orderForm.reset();
-                    // НЕ УДАЛЯЕМ СООБЩЕНИЕ АВТОМАТИЧЕСКИ
-                    // Оно остаётся до перезагрузки страницы
+                    //остаётся до перезагрузки страницы
                 }
             } else {
                 let errorText = 'Ошибка при отправке. ';
@@ -282,17 +281,17 @@ if (userLoginForm) {
             const result = await response.json();
             
             if (response.ok && result.success) {
-                loginMessage.innerHTML = '✅ Вход выполнен успешно! Перезагружаем страницу...';
+                loginMessage.innerHTML = ' Вход выполнен успешно! Перезагружаем страницу...';
                 loginMessage.style.color = 'green';
                 sessionStorage.setItem('userLoggedIn', 'true');
                 sessionStorage.setItem('userId', result.user.id);
                 setTimeout(() => window.location.reload(), 1500);
             } else {
-                loginMessage.innerHTML = '❌ ' + (result.error || 'Неверный логин или пароль');
+                loginMessage.innerHTML = ' ' + (result.error || 'Неверный логин или пароль');
                 loginMessage.style.color = 'red';
             }
         } catch (error) {
-            loginMessage.innerHTML = '❌ Ошибка сети. Попробуйте позже.';
+            loginMessage.innerHTML = ' Ошибка сети. Попробуйте позже.';
             loginMessage.style.color = 'red';
         }
     });
