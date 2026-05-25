@@ -40,193 +40,432 @@ if (mobileDropdownToggle) {
     });
 }
 
-// Модальное окно входа (Логин)
-const loginLink = document.getElementById('loginLink');
-const loginModal = document.getElementById('loginModal');
-const closeLoginModal = document.querySelector('#loginModal .close');
+// Слайдер
+const slider = document.getElementById('slider');
+const sliderPrev = document.getElementById('sliderPrev');
+const sliderNext = document.getElementById('sliderNext');
+const sliderDots = document.getElementById('sliderDots');
 
-if (loginLink) {
-    loginLink.addEventListener('click', (e) => {
+let currentSlide = 0;
+let slideInterval;
+const slides = document.querySelectorAll('.slide');
+const totalSlides = slides.length;
+
+function createSliderDots() {
+    if (!sliderDots) return;
+    sliderDots.innerHTML = '';
+    for (let i = 0; i < totalSlides; i++) {
+        const dot = document.createElement('button');
+        dot.classList.add('slider-dot');
+        if (i === 0) dot.classList.add('active');
+        dot.setAttribute('data-slide', i);
+        sliderDots.appendChild(dot);
+        dot.addEventListener('click', () => {
+            goToSlide(i);
+            resetSlideInterval();
+        });
+    }
+}
+
+function goToSlide(slideIndex) {
+    if (!slider) return;
+    currentSlide = slideIndex;
+    slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+    const dots = document.querySelectorAll('.slider-dot');
+    dots.forEach((dot, index) => {
+        dot.classList.toggle('active', index === currentSlide);
+    });
+}
+
+function startSlideInterval() {
+    if (totalSlides === 0) return;
+    slideInterval = setInterval(() => {
+        currentSlide = (currentSlide + 1) % totalSlides;
+        goToSlide(currentSlide);
+    }, 5000);
+}
+
+function resetSlideInterval() {
+    clearInterval(slideInterval);
+    startSlideInterval();
+}
+
+if (sliderPrev && sliderNext) {
+    sliderPrev.addEventListener('click', () => {
+        currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+        goToSlide(currentSlide);
+        resetSlideInterval();
+    });
+    sliderNext.addEventListener('click', () => {
+        currentSlide = (currentSlide + 1) % totalSlides;
+        goToSlide(currentSlide);
+        resetSlideInterval();
+    });
+}
+
+const sliderContainer = document.querySelector('.slider-container');
+if (sliderContainer) {
+    sliderContainer.addEventListener('mouseenter', () => clearInterval(slideInterval));
+    sliderContainer.addEventListener('mouseleave', () => startSlideInterval());
+}
+
+createSliderDots();
+startSlideInterval();
+
+// FAQ
+const faqItems = document.querySelectorAll('.faq-item');
+faqItems.forEach(item => {
+    const question = item.querySelector('.faq-question');
+    if (question) {
+        question.addEventListener('click', () => {
+            faqItems.forEach(otherItem => {
+                if (otherItem !== item && otherItem.classList.contains('active')) {
+                    otherItem.classList.remove('active');
+                }
+            });
+            item.classList.toggle('active');
+        });
+    }
+});
+
+// Плавная прокрутка
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+        if (this.classList.contains('dropdown-item') || this.getAttribute('href') === '#') return;
         e.preventDefault();
-        if (!loginLink.innerHTML.includes('fa-user')) {
-            loginModal.style.display = 'block';
+        const targetId = this.getAttribute('href');
+        if (targetId === '#') return;
+        const targetElement = document.querySelector(targetId);
+        if (targetElement) {
+            if (navMobile && navMobile.classList.contains('active')) {
+                navMobile.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+            window.scrollTo({ top: targetElement.offsetTop - 80, behavior: 'smooth' });
         }
     });
-}
+});
 
-if (closeLoginModal) {
-    closeLoginModal.addEventListener('click', () => {
-        loginModal.style.display = 'none';
-    });
-}
+// Навигация при скролле
+const navbar = document.querySelector('.navbar');
+window.addEventListener('scroll', () => {
+    if (navbar) {
+        if (window.scrollY > 100) {
+            navbar.style.backgroundColor = 'rgba(255, 255, 255, 0.98)';
+            navbar.style.boxShadow = '0 4px 12px rgba(139, 69, 19, 0.1)';
+        } else {
+            navbar.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
+            navbar.style.boxShadow = '0 2px 10px rgba(139, 69, 19, 0.1)';
+        }
+    }
+});
 
-// Отправка основного заказа
+// ========== ОТПРАВКА ФОРМЫ ==========
 const orderForm = document.getElementById('orderForm');
 const formMessage = document.getElementById('formMessage');
+const submitBtn = document.getElementById('submitBtn');
 
 if (orderForm) {
-    orderForm.addEventListener('submit', async (e) => {
+    orderForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        const formData = {
-            name: document.getElementById('name').value,
-            phone: document.getElementById('phone').value,
-            email: document.getElementById('email').value,
-            dessert: document.getElementById('dessert').value,
-            date: document.getElementById('date').value,
-            servings: document.getElementById('servings').value,
-            message: document.getElementById('message').value
-        };
-
+        if (submitBtn) {
+            submitBtn.textContent = "Отправка...";
+            submitBtn.disabled = true;
+        }
+        
         if (formMessage) {
-            formMessage.innerHTML = 'Отправка...';
-            formMessage.className = 'form-message';
+            formMessage.textContent = 'Отправляем ваш заказ...';
+            formMessage.classList.remove('error');
+            formMessage.classList.add('success');
             formMessage.style.display = 'block';
         }
-
+        
         try {
+            const formData = new FormData(orderForm);
+            const data = {};
+            formData.forEach((value, key) => { data[key] = value; });
+            
             const response = await fetch('/web_project/api/application', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(data)
             });
-
+            
             const result = await response.json();
-
+            
             if (response.ok && result.success) {
                 let messageText = result.message || 'Заказ успешно отправлен!';
                 
                 if (result.credentials) {
-                    messageText = `
-                        <div class="credentials-message" style="background: #FFF5EE; padding: 15px; border: 1px solid var(--primary-dark); border-radius: 6px; margin-top: 15px;">
-                            <p><strong>✨ Заказ оформлен! Создан ваш личный кабинет:</strong></p>
-                            <p>Логин: <strong>${result.credentials.login}</strong></p>
-                            <p>Пароль: <strong>${result.credentials.password}</strong></p>
-                            <p style="font-size: 0.85em; color: gray; margin-top: 5px;">Используйте их для просмотра ваших заказов вверху страницы.</p>
-                        </div>
-                    `;
+                    messageText = '<div class="credentials-message">';
+                    messageText += '<strong>Заказ успешно отправлен!</strong><br><br>';
+                    messageText += 'Сохраните данные для входа:<br>';
+                    messageText += 'Логин: <strong>' + result.credentials.login + '</strong><br>';
+                    messageText += 'Пароль: <strong>' + result.credentials.password + '</strong><br><br>';
+                    messageText += 'Вы можете использовать их для входа в личный кабинет.';
+                    messageText += '</div>';
                 }
                 
-                if (formMessage) formMessage.innerHTML = messageText;
-                orderForm.reset();
-                checkAuth();
-            } else {
-                let errText = 'Произошла ошибка при отправке.';
-                if (result.errors) {
-                    errText = Object.values(result.errors).join('<br>');
+                if (formMessage) {
+                    formMessage.innerHTML = messageText;
+                    orderForm.reset();
                 }
-                if (formMessage) formMessage.innerHTML = `<div class="error" style="color:red;">${errText}</div>`;
+            } else {
+                let errorText = 'Ошибка при отправке. ';
+                if (result.errors) errorText += Object.values(result.errors).join(' ');
+                else if (result.error) errorText += result.error;
+                throw new Error(errorText);
             }
         } catch (error) {
-            if (formMessage) formMessage.innerHTML = '<div class="error" style="color:red;">Ошибка сети при отправке заказа.</div>';
+            console.error('Ошибка:', error);
+            if (formMessage) {
+                formMessage.innerHTML = error.message || 'Ошибка при отправке. Попробуйте еще раз.';
+                formMessage.classList.remove('success');
+                formMessage.classList.add('error');
+                formMessage.style.display = 'block';
+            }
+        } finally {
+            if (submitBtn) {
+                submitBtn.textContent = "Отправить заявку";
+                submitBtn.disabled = false;
+            }
         }
     });
 }
 
-// Авторизация пользователя (форма)
+// ========== МОДАЛЬНОЕ ОКНО ДЛЯ ВХОДА ==========
+const loginLink = document.getElementById('loginLink');
+const loginModal = document.getElementById('loginModal');
+const closeModal = document.querySelector('.close');
 const userLoginForm = document.getElementById('userLoginForm');
+const loginMessage = document.getElementById('loginMessage');
+
+if (loginLink) {
+    loginLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (loginModal) loginModal.style.display = 'block';
+    });
+}
+
+if (closeModal) {
+    closeModal.addEventListener('click', () => {
+        if (loginModal) loginModal.style.display = 'none';
+    });
+}
+
+window.addEventListener('click', (e) => {
+    if (e.target === loginModal) loginModal.style.display = 'none';
+});
+
 if (userLoginForm) {
     userLoginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const loginVal = document.getElementById('userLogin').value;
-        const passVal = document.getElementById('userPassword').value;
-
+        const login = document.getElementById('userLogin').value;
+        const password = document.getElementById('userPassword').value;
+        
+        if (loginMessage) {
+            loginMessage.innerHTML = 'Вход...';
+            loginMessage.style.color = '#DAA520';
+        }
+        
         try {
             const response = await fetch('/web_project/api/login.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({ login: loginVal, password: passVal })
+                body: JSON.stringify({ login, password })
             });
+            
             const result = await response.json();
-            const msgDiv = document.getElementById('loginMessage');
-
-            if (result.success) {
-                msgDiv.innerHTML = '<div class="success" style="color:green; margin-top:10px;">Вход выполнен успешно!</div>';
-                if (loginLink) loginLink.innerHTML = `<i class="fas fa-user"></i> ${result.user.login}`;
-                const ordersLink = document.getElementById('ordersLink');
-                if (ordersLink) ordersLink.style.display = 'inline-block';
-                
-                setTimeout(() => {
-                    loginModal.style.display = 'none';
-                    msgDiv.innerHTML = '';
-                }, 1000);
+            
+            if (response.ok && result.success) {
+                loginMessage.innerHTML = 'Вход выполнен успешно! Перезагружаем...';
+                loginMessage.style.color = 'green';
+                setTimeout(() => window.location.reload(), 1500);
             } else {
-                msgDiv.innerHTML = `<div class="error" style="color:red; margin-top:10px;">${result.error || 'Ошибка входа'}</div>`;
+                loginMessage.innerHTML = result.error || 'Неверный логин или пароль';
+                loginMessage.style.color = 'red';
             }
         } catch (error) {
-            document.getElementById('loginMessage').innerHTML = '<div class="error" style="color:red; margin-top:10px;">Ошибка сервера</div>';
+            loginMessage.innerHTML = 'Ошибка сети. Попробуйте позже.';
+            loginMessage.style.color = 'red';
         }
     });
 }
 
-// --- ЛОГИКА ПОП-АПОВ ПРОСМОТРА И РЕДАКТИРОВАНИЯ ЗАКАЗОВ ---
-document.addEventListener('DOMContentLoaded', () => {
-    const ordersLink = document.getElementById('ordersLink');
-    const ordersModal = document.getElementById('ordersModal');
-    const closeOrdersModal = document.getElementById('closeOrdersModal');
-    const editOrderModal = document.getElementById('editOrderModal');
-    const closeEditModal = document.getElementById('closeEditModal');
-    const editOrderForm = document.getElementById('editOrderForm');
+// ========== ЗАГРУЗКА И РЕДАКТИРОВАНИЕ ЗАКАЗОВ ПОЛЬЗОВАТЕЛЯ ==========
 
-    if (ordersLink) {
-        ordersLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            loadUserOrders();
-            ordersModal.style.display = 'block';
+async function loadUserOrders() {
+    try {
+        const response = await fetch('/web_project/api/user/orders', {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
         });
+        const result = await response.json();
+        
+        if (result.success && result.orders && result.orders.length > 0) {
+            showOrdersList(result.orders);
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки заказов:', error);
     }
+}
 
-    if (closeOrdersModal) closeOrdersModal.addEventListener('click', () => ordersModal.style.display = 'none');
-    if (closeEditModal) closeEditModal.addEventListener('click', () => editOrderModal.style.display = 'none');
-
-    window.addEventListener('click', (e) => {
-        if (e.target === loginModal) loginModal.style.display = 'none';
-        if (e.target === ordersModal) ordersModal.style.display = 'none';
-        if (e.target === editOrderModal) editOrderModal.style.display = 'none';
+function showOrdersList(orders) {
+    const authLinks = document.querySelector('.auth-links');
+    if (!authLinks) return;
+    
+    const oldLink = document.getElementById('editProfileLink');
+    if (oldLink) oldLink.remove();
+    
+    const editLink = document.createElement('a');
+    editLink.id = 'editProfileLink';
+    editLink.href = '#';
+    editLink.className = 'auth-link';
+    editLink.textContent = 'Мои заказы (' + orders.length + ')';
+    editLink.style.marginLeft = '15px';
+    editLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        showOrdersModal(orders);
     });
+    authLinks.appendChild(editLink);
+}
 
-    if (editOrderForm) {
-        editOrderForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const orderId = document.getElementById('editOrderId').value;
-            
-            const data = {
-                name: document.getElementById('editName').value,
-                phone: document.getElementById('editPhone').value,
-                email: document.getElementById('editEmail').value,
-                servings: document.getElementById('editServings').value,
-                message: document.getElementById('editMessage').value
-            };
+function showOrdersModal(orders) {
+    let modal = document.getElementById('ordersModal');
+    if (modal) modal.remove();
+    
+    modal = document.createElement('div');
+    modal.id = 'ordersModal';
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    
+    let ordersHtml = '<div class="modal-content" style="max-width: 800px; max-height: 80vh; overflow-y: auto;">';
+    ordersHtml += '<span class="close" onclick="document.getElementById(\'ordersModal\').style.display=\'none\'">&times;</span>';
+    ordersHtml += '<h3>Мои заказы</h3>';
+    
+    orders.forEach(order => {
+        ordersHtml += '<div style="border: 1px solid #e0c9b8; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: #FFF5EE;">';
+        ordersHtml += '<p><strong>Заказ #' + order.id + '</strong> от ' + order.created_at + '</p>';
+        ordersHtml += '<p><strong>Имя:</strong> ' + escapeHtml(order.name) + '</p>';
+        ordersHtml += '<p><strong>Телефон:</strong> ' + escapeHtml(order.phone) + '</p>';
+        ordersHtml += '<p><strong>Email:</strong> ' + escapeHtml(order.email || '-') + '</p>';
+        ordersHtml += '<p><strong>Десерт:</strong> ' + escapeHtml(order.dessert || '-') + '</p>';
+        ordersHtml += '<p><strong>Дата получения:</strong> ' + (order.date || '-') + '</p>';
+        ordersHtml += '<p><strong>Количество персон:</strong> ' + (order.servings || '-') + '</p>';
+        ordersHtml += '<p><strong>Пожелания:</strong> ' + escapeHtml(order.message || '-') + '</p>';
+        ordersHtml += '<button class="btn btn-small" onclick="window.editOrderModal(' + order.id + ')">Редактировать</button>';
+        ordersHtml += '</div>';
+    });
+    
+    ordersHtml += '</div>';
+    modal.innerHTML = ordersHtml;
+    document.body.appendChild(modal);
+    
+    const closeBtn = modal.querySelector('.close');
+    closeBtn.onclick = () => { modal.style.display = 'none'; };
+    window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+}
 
-            try {
-                const response = await fetch(`/web_project/api/application/${orderId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const result = await response.json();
-                const msgDiv = document.getElementById('editMessage');
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
 
-                if (result.success) {
-                    msgDiv.innerHTML = '<div class="form-message success" style="display:block; margin-top:15px; color:green; font-weight:bold;">Заказ обновлён!</div>';
-                    loadUserOrders();
-                    setTimeout(() => {
-                        editOrderModal.style.display = 'none';
-                        msgDiv.innerHTML = '';
-                    }, 1200);
-                } else {
-                    msgDiv.innerHTML = '<div class="form-message error" style="display:block; margin-top:15px; color:red;">' + (result.error || 'Ошибка') + '</div>';
-                }
-            } catch (error) {
-                document.getElementById('editMessage').innerHTML = '<div class="form-message error" style="display:block; margin-top:15px; color:red;">Ошибка сети</div>';
-            }
+window.editOrderModal = async function(orderId) {
+    try {
+        const response = await fetch('/web_project/api/application/' + orderId, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
         });
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            showEditForm(result.data);
+        } else {
+            alert('Ошибка загрузки заказа');
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Ошибка загрузки заказа');
     }
+};
 
-    checkAuth();
-});
+function showEditForm(order) {
+    let modal = document.getElementById('editOrderModal');
+    if (modal) modal.remove();
+    
+    modal = document.createElement('div');
+    modal.id = 'editOrderModal';
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    
+    const formHtml = `
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="document.getElementById('editOrderModal').style.display='none'">&times;</span>
+            <h3>Редактирование заказа #${order.id}</h3>
+            <form id="editOrderForm">
+                <div class="form-group"><label>Имя:</label><input type="text" name="name" value="${escapeHtml(order.name)}" required class="form-control"></div>
+                <div class="form-group"><label>Телефон:</label><input type="text" name="phone" value="${escapeHtml(order.phone)}" required class="form-control"></div>
+                <div class="form-group"><label>Email:</label><input type="email" name="email" value="${escapeHtml(order.email || '')}" class="form-control"></div>
+                <div class="form-group"><label>Десерт:</label>
+                    <select name="dessert" class="form-control">
+                        <option value="">Выберите</option>
+                        <option value="chocolate-cake" ${order.dessert === 'chocolate-cake' ? 'selected' : ''}>Шоколадный торт</option>
+                        <option value="macarons" ${order.dessert === 'macarons' ? 'selected' : ''}>Макаруны</option>
+                        <option value="cupcakes" ${order.dessert === 'cupcakes' ? 'selected' : ''}>Капкейки</option>
+                        <option value="red-velvet" ${order.dessert === 'red-velvet' ? 'selected' : ''}>Красный бархат</option>
+                        <option value="other" ${order.dessert === 'other' ? 'selected' : ''}>Другой</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Дата получения:</label><input type="date" name="date" value="${order.date || ''}" class="form-control"></div>
+                <div class="form-group"><label>Количество персон:</label><input type="number" name="servings" value="${order.servings || ''}" class="form-control"></div>
+                <div class="form-group"><label>Пожелания:</label><textarea name="message" rows="3" class="form-control">${escapeHtml(order.message || '')}</textarea></div>
+                <button type="submit" class="btn">Сохранить изменения</button>
+            </form>
+            <div id="editMessage"></div>
+        </div>
+    `;
+    
+    modal.innerHTML = formHtml;
+    document.body.appendChild(modal);
+    
+    const closeBtn = modal.querySelector('.close');
+    closeBtn.onclick = () => { modal.style.display = 'none'; };
+    
+    const form = document.getElementById('editOrderForm');
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const data = {};
+        formData.forEach((v, k) => { data[k] = v; });
+        
+        try {
+            const response = await fetch('/web_project/api/application/' + order.id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            const msgDiv = document.getElementById('editMessage');
+            if (result.success) {
+                msgDiv.innerHTML = '<div class="form-message success" style="display:block; margin-top:15px;">Заказ обновлён! Страница будет перезагружена.</div>';
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                msgDiv.innerHTML = '<div class="form-message error" style="display:block; margin-top:15px;">' + (result.error || 'Ошибка') + '</div>';
+            }
+        } catch (error) {
+            document.getElementById('editMessage').innerHTML = '<div class="form-message error" style="display:block; margin-top:15px;">Ошибка сети</div>';
+        }
+    };
+}
 
-// Проверка сессии
+// Проверка авторизации
 async function checkAuth() {
     try {
         const response = await fetch('/web_project/api/check.php', {
@@ -234,76 +473,12 @@ async function checkAuth() {
             headers: { 'Accept': 'application/json' }
         });
         const result = await response.json();
-        
-        const lLink = document.getElementById('loginLink');
-        const oLink = document.getElementById('ordersLink');
-
         if (result.success && result.logged_in) {
-            if (lLink) lLink.innerHTML = `<i class="fas fa-user"></i> ${result.login}`;
-            if (oLink) oLink.style.display = 'inline-block';
+            await loadUserOrders();
         }
     } catch (error) {
-        console.error('Ошибка авторизации:', error);
+        console.error('Ошибка проверки авторизации:', error);
     }
 }
 
-// Рендеринг карточек заказов пользователя
-async function loadUserOrders() {
-    const listDiv = document.getElementById('userOrdersList');
-    if (!listDiv) return;
-
-    listDiv.innerHTML = '<p style="text-align:center; color: var(--dark);">Загрузка ваших заказов...</p>';
-
-    try {
-        const response = await fetch('/web_project/api/application', {
-            method: 'GET',
-            headers: { 'Accept': 'application/json' }
-        });
-        const result = await response.json();
-
-        if (result.success && result.orders && result.orders.length > 0) {
-            listDiv.innerHTML = '';
-            
-            result.orders.forEach(order => {
-                const card = document.createElement('div');
-                card.className = 'order-card';
-                
-                const dDate = order.date ? order.date : 'Не указана';
-                const dDessert = order.dessert ? order.dessert : 'Индивидуальный выбор';
-                const safeOrder = JSON.stringify(order).replace(/"/g, '&quot;');
-
-                card.innerHTML = `
-                    <div class="order-info">
-                        <h4>Заказ №${order.id} — ${dDessert}</h4>
-                        <p><strong>Дата доставки:</strong> ${dDate} | <strong>Гостей:</strong> ${order.servings || '-'}</p>
-                        <p><strong>Контакт:</strong> ${order.name} (${order.phone})</p>
-                        ${order.message ? `<p><strong>Пожелания:</strong> ${order.message}</p>` : ''}
-                    </div>
-                    <div class="order-actions">
-                        <button class="btn-sm btn-edit-order" onclick="openEditOrderPopup(${safeOrder})">
-                            <i class="fas fa-edit"></i> Редактировать
-                        </button>
-                    </div>
-                `;
-                listDiv.appendChild(card);
-            });
-        } else {
-            listDiv.innerHTML = '<div class="no-orders">У вас пока нет оформленных заказов.</div>';
-        }
-    } catch (error) {
-        listDiv.innerHTML = '<div class="no-orders" style="color:red;">Ошибка при получении списка заказов.</div>';
-    }
-}
-
-// Открытие поп-апа изменения и подгрузка данных
-function openEditOrderPopup(order) {
-    document.getElementById('editOrderId').value = order.id;
-    document.getElementById('editName').value = order.name;
-    document.getElementById('editPhone').value = order.phone;
-    document.getElementById('editEmail').value = order.email || '';
-    document.getElementById('editServings').value = order.servings || '';
-    document.getElementById('editMessage').value = order.message || '';
-    document.getElementById('editMessage').innerHTML = '';
-    
-    document.getElementById('editOrderModal').style.display = 'block';
-}
+document.addEventListener('DOMContentLoaded', checkAuth);
