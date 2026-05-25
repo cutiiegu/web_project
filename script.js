@@ -279,9 +279,14 @@ if (userLoginForm) {
             const result = await response.json();
             
             if (response.ok && result.success) {
-                loginMessage.innerHTML = 'Вход выполнен успешно! Перезагружаем...';
+                loginMessage.innerHTML = 'Вход выполнен успешно! Загружаем заказы...';
                 loginMessage.style.color = 'green';
-                setTimeout(() => window.location.reload(), 1500);
+                
+                // Закрываем модальное окно входа
+                if (loginModal) loginModal.style.display = 'none';
+                
+                // Загружаем заказы пользователя
+                await loadAndShowOrders();
             } else {
                 loginMessage.innerHTML = result.error || 'Неверный логин или пароль';
                 loginMessage.style.color = 'red';
@@ -293,42 +298,51 @@ if (userLoginForm) {
     });
 }
 
-// ========== ЗАГРУЗКА И РЕДАКТИРОВАНИЕ ЗАКАЗОВ ПОЛЬЗОВАТЕЛЯ ==========
+// ========== ЗАГРУЗКА И ПОКАЗ ЗАКАЗОВ ПОСЛЕ ВХОДА ==========
 
-async function loadUserOrders() {
+async function loadAndShowOrders() {
     try {
-        const response = await fetch('/web_project/api/user/orders', {
+        const response = await fetch('/web_project/api/application', {
             method: 'GET',
             headers: { 'Accept': 'application/json' }
         });
         const result = await response.json();
         
         if (result.success && result.orders && result.orders.length > 0) {
-            showOrdersList(result.orders);
+            showOrdersModal(result.orders);
+        } else if (result.success && (!result.orders || result.orders.length === 0)) {
+            showNoOrdersModal();
+        } else {
+            alert('Ошибка загрузки заказов');
         }
     } catch (error) {
         console.error('Ошибка загрузки заказов:', error);
+        alert('Ошибка загрузки заказов');
     }
 }
 
-function showOrdersList(orders) {
-    const authLinks = document.querySelector('.auth-links');
-    if (!authLinks) return;
+function showNoOrdersModal() {
+    let modal = document.getElementById('ordersModal');
+    if (modal) modal.remove();
     
-    const oldLink = document.getElementById('editProfileLink');
-    if (oldLink) oldLink.remove();
+    modal = document.createElement('div');
+    modal.id = 'ordersModal';
+    modal.className = 'modal';
+    modal.style.display = 'block';
     
-    const editLink = document.createElement('a');
-    editLink.id = 'editProfileLink';
-    editLink.href = '#';
-    editLink.className = 'auth-link';
-    editLink.textContent = 'Мои заказы (' + orders.length + ')';
-    editLink.style.marginLeft = '15px';
-    editLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        showOrdersModal(orders);
-    });
-    authLinks.appendChild(editLink);
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <span class="close" onclick="document.getElementById('ordersModal').style.display='none'">&times;</span>
+            <h3>Личный кабинет</h3>
+            <p>У вас пока нет заказов.</p>
+            <button class="btn" onclick="document.getElementById('ordersModal').style.display='none'">Закрыть</button>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    const closeBtn = modal.querySelector('.close');
+    closeBtn.onclick = () => { modal.style.display = 'none'; };
 }
 
 function showOrdersModal(orders) {
@@ -345,7 +359,7 @@ function showOrdersModal(orders) {
     ordersHtml += '<h3>Мои заказы</h3>';
     
     orders.forEach(order => {
-        ordersHtml += '<div style="border: 1px solid #e0c9b8; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: #FFF5EE;">';
+        ordersHtml += '<div style="border: 1px solid #e0c9b8; border-radius: 12px; padding: 15px; margin-bottom: 15px; background: #FFF5EE;">';
         ordersHtml += '<p><strong>Заказ #' + order.id + '</strong> от ' + order.created_at + '</p>';
         ordersHtml += '<p><strong>Имя:</strong> ' + escapeHtml(order.name) + '</p>';
         ordersHtml += '<p><strong>Телефон:</strong> ' + escapeHtml(order.phone) + '</p>';
@@ -385,8 +399,8 @@ window.editOrderModal = async function(orderId) {
         });
         const result = await response.json();
         
-        if (result.success && result.data) {
-            showEditForm(result.data);
+        if (result.success && result.order) {
+            showEditForm(result.order);
         } else {
             alert('Ошибка загрузки заказа');
         }
@@ -465,16 +479,33 @@ function showEditForm(order) {
     };
 }
 
-// Проверка авторизации
+// Проверка авторизации при загрузке страницы
 async function checkAuth() {
     try {
-        const response = await fetch('/web_project/api/check.php', {
+        const response = await fetch('/web_project/api/application', {
             method: 'GET',
             headers: { 'Accept': 'application/json' }
         });
         const result = await response.json();
-        if (result.success && result.logged_in) {
-            await loadUserOrders();
+        if (result.success && result.orders !== undefined) {
+            // Пользователь авторизован, показываем его заказы
+            if (result.orders && result.orders.length > 0) {
+                // Можем показать кнопку "Мои заказы" в шапке
+                const authLinks = document.querySelector('.auth-links');
+                if (authLinks && !document.getElementById('myOrdersBtn')) {
+                    const ordersBtn = document.createElement('a');
+                    ordersBtn.id = 'myOrdersBtn';
+                    ordersBtn.href = '#';
+                    ordersBtn.className = 'auth-link';
+                    ordersBtn.textContent = 'Мои заказы';
+                    ordersBtn.style.marginLeft = '15px';
+                    ordersBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        showOrdersModal(result.orders);
+                    });
+                    authLinks.appendChild(ordersBtn);
+                }
+            }
         }
     } catch (error) {
         console.error('Ошибка проверки авторизации:', error);
