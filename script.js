@@ -197,11 +197,10 @@ if (orderForm) {
             if (response.ok && result.success) {
                 let messageText = result.message || 'Заказ успешно отправлен!';
                 
-                // credentials остаются на экране (не исчезают)
                 if (result.credentials) {
                     messageText = '<div class="credentials-message">';
-                    messageText += '<strong> Заказ успешно отправлен!</strong><br><br>';
-                    messageText += '<strong>Сохраните данные для входа:</strong><br>';
+                    messageText += '<strong>Заказ успешно отправлен!</strong><br><br>';
+                    messageText += 'Сохраните данные для входа:<br>';
                     messageText += 'Логин: <strong>' + result.credentials.login + '</strong><br>';
                     messageText += 'Пароль: <strong>' + result.credentials.password + '</strong><br><br>';
                     messageText += 'Вы можете использовать их для входа в личный кабинет.';
@@ -211,7 +210,6 @@ if (orderForm) {
                 if (formMessage) {
                     formMessage.innerHTML = messageText;
                     orderForm.reset();
-                    //остаётся до перезагрузки страницы
                 }
             } else {
                 let errorText = 'Ошибка при отправке. ';
@@ -281,20 +279,190 @@ if (userLoginForm) {
             const result = await response.json();
             
             if (response.ok && result.success) {
-                loginMessage.innerHTML = ' Вход выполнен успешно! Перезагружаем страницу...';
+                loginMessage.innerHTML = 'Вход выполнен успешно! Перезагружаем...';
                 loginMessage.style.color = 'green';
-                sessionStorage.setItem('userLoggedIn', 'true');
-                sessionStorage.setItem('userId', result.user.id);
                 setTimeout(() => window.location.reload(), 1500);
             } else {
-                loginMessage.innerHTML = ' ' + (result.error || 'Неверный логин или пароль');
+                loginMessage.innerHTML = result.error || 'Неверный логин или пароль';
                 loginMessage.style.color = 'red';
             }
         } catch (error) {
-            loginMessage.innerHTML = ' Ошибка сети. Попробуйте позже.';
+            loginMessage.innerHTML = 'Ошибка сети. Попробуйте позже.';
             loginMessage.style.color = 'red';
         }
     });
+}
+
+// ========== ЗАГРУЗКА И РЕДАКТИРОВАНИЕ ЗАКАЗОВ ПОЛЬЗОВАТЕЛЯ ==========
+
+async function loadUserOrders() {
+    try {
+        const response = await fetch('/web_project/api/user/orders', {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+        });
+        const result = await response.json();
+        
+        if (result.success && result.orders && result.orders.length > 0) {
+            showOrdersList(result.orders);
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки заказов:', error);
+    }
+}
+
+function showOrdersList(orders) {
+    const authLinks = document.querySelector('.auth-links');
+    if (!authLinks) return;
+    
+    const oldLink = document.getElementById('editProfileLink');
+    if (oldLink) oldLink.remove();
+    
+    const editLink = document.createElement('a');
+    editLink.id = 'editProfileLink';
+    editLink.href = '#';
+    editLink.className = 'auth-link';
+    editLink.textContent = 'Мои заказы (' + orders.length + ')';
+    editLink.style.marginLeft = '15px';
+    editLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        showOrdersModal(orders);
+    });
+    authLinks.appendChild(editLink);
+}
+
+function showOrdersModal(orders) {
+    let modal = document.getElementById('ordersModal');
+    if (modal) modal.remove();
+    
+    modal = document.createElement('div');
+    modal.id = 'ordersModal';
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    
+    let ordersHtml = '<div class="modal-content" style="max-width: 800px; max-height: 80vh; overflow-y: auto;">';
+    ordersHtml += '<span class="close" onclick="document.getElementById(\'ordersModal\').style.display=\'none\'">&times;</span>';
+    ordersHtml += '<h3>Мои заказы</h3>';
+    
+    orders.forEach(order => {
+        ordersHtml += '<div style="border: 1px solid #e0c9b8; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: #FFF5EE;">';
+        ordersHtml += '<p><strong>Заказ #' + order.id + '</strong> от ' + order.created_at + '</p>';
+        ordersHtml += '<p><strong>Имя:</strong> ' + escapeHtml(order.name) + '</p>';
+        ordersHtml += '<p><strong>Телефон:</strong> ' + escapeHtml(order.phone) + '</p>';
+        ordersHtml += '<p><strong>Email:</strong> ' + escapeHtml(order.email || '-') + '</p>';
+        ordersHtml += '<p><strong>Десерт:</strong> ' + escapeHtml(order.dessert || '-') + '</p>';
+        ordersHtml += '<p><strong>Дата получения:</strong> ' + (order.date || '-') + '</p>';
+        ordersHtml += '<p><strong>Количество персон:</strong> ' + (order.servings || '-') + '</p>';
+        ordersHtml += '<p><strong>Пожелания:</strong> ' + escapeHtml(order.message || '-') + '</p>';
+        ordersHtml += '<button class="btn btn-small" onclick="window.editOrderModal(' + order.id + ')">Редактировать</button>';
+        ordersHtml += '</div>';
+    });
+    
+    ordersHtml += '</div>';
+    modal.innerHTML = ordersHtml;
+    document.body.appendChild(modal);
+    
+    const closeBtn = modal.querySelector('.close');
+    closeBtn.onclick = () => { modal.style.display = 'none'; };
+    window.onclick = (e) => { if (e.target === modal) modal.style.display = 'none'; };
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
+window.editOrderModal = async function(orderId) {
+    try {
+        const response = await fetch('/web_project/api/application/' + orderId, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+        });
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+            showEditForm(result.data);
+        } else {
+            alert('Ошибка загрузки заказа');
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Ошибка загрузки заказа');
+    }
+};
+
+function showEditForm(order) {
+    let modal = document.getElementById('editOrderModal');
+    if (modal) modal.remove();
+    
+    modal = document.createElement('div');
+    modal.id = 'editOrderModal';
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    
+    const formHtml = `
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="document.getElementById('editOrderModal').style.display='none'">&times;</span>
+            <h3>Редактирование заказа #${order.id}</h3>
+            <form id="editOrderForm">
+                <div class="form-group"><label>Имя:</label><input type="text" name="name" value="${escapeHtml(order.name)}" required class="form-control"></div>
+                <div class="form-group"><label>Телефон:</label><input type="text" name="phone" value="${escapeHtml(order.phone)}" required class="form-control"></div>
+                <div class="form-group"><label>Email:</label><input type="email" name="email" value="${escapeHtml(order.email || '')}" class="form-control"></div>
+                <div class="form-group"><label>Десерт:</label>
+                    <select name="dessert" class="form-control">
+                        <option value="">Выберите</option>
+                        <option value="chocolate-cake" ${order.dessert === 'chocolate-cake' ? 'selected' : ''}>Шоколадный торт</option>
+                        <option value="macarons" ${order.dessert === 'macarons' ? 'selected' : ''}>Макаруны</option>
+                        <option value="cupcakes" ${order.dessert === 'cupcakes' ? 'selected' : ''}>Капкейки</option>
+                        <option value="red-velvet" ${order.dessert === 'red-velvet' ? 'selected' : ''}>Красный бархат</option>
+                        <option value="other" ${order.dessert === 'other' ? 'selected' : ''}>Другой</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Дата получения:</label><input type="date" name="date" value="${order.date || ''}" class="form-control"></div>
+                <div class="form-group"><label>Количество персон:</label><input type="number" name="servings" value="${order.servings || ''}" class="form-control"></div>
+                <div class="form-group"><label>Пожелания:</label><textarea name="message" rows="3" class="form-control">${escapeHtml(order.message || '')}</textarea></div>
+                <button type="submit" class="btn">Сохранить изменения</button>
+            </form>
+            <div id="editMessage"></div>
+        </div>
+    `;
+    
+    modal.innerHTML = formHtml;
+    document.body.appendChild(modal);
+    
+    const closeBtn = modal.querySelector('.close');
+    closeBtn.onclick = () => { modal.style.display = 'none'; };
+    
+    const form = document.getElementById('editOrderForm');
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const data = {};
+        formData.forEach((v, k) => { data[k] = v; });
+        
+        try {
+            const response = await fetch('/web_project/api/application/' + order.id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            const msgDiv = document.getElementById('editMessage');
+            if (result.success) {
+                msgDiv.innerHTML = '<div class="form-message success" style="display:block; margin-top:15px;">Заказ обновлён! Страница будет перезагружена.</div>';
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                msgDiv.innerHTML = '<div class="form-message error" style="display:block; margin-top:15px;">' + (result.error || 'Ошибка') + '</div>';
+            }
+        } catch (error) {
+            document.getElementById('editMessage').innerHTML = '<div class="form-message error" style="display:block; margin-top:15px;">Ошибка сети</div>';
+        }
+    };
 }
 
 // Проверка авторизации
@@ -306,20 +474,7 @@ async function checkAuth() {
         });
         const result = await response.json();
         if (result.success && result.logged_in) {
-            const authLinks = document.querySelector('.auth-links');
-            if (authLinks && !document.getElementById('editProfileLink')) {
-                const editLink = document.createElement('a');
-                editLink.id = 'editProfileLink';
-                editLink.href = '#';
-                editLink.className = 'auth-link';
-                editLink.textContent = 'Мои заказы';
-                editLink.style.marginLeft = '10px';
-                editLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    alert('Функция просмотра заказов в разработке');
-                });
-                authLinks.appendChild(editLink);
-            }
+            await loadUserOrders();
         }
     } catch (error) {
         console.error('Ошибка проверки авторизации:', error);
