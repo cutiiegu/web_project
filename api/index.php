@@ -11,11 +11,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once '../config.php';
 
-$method = $_SERVER['REQUEST_METHOD'];
-$request_uri = $_SERVER['REQUEST_URI'];
-$path = parse_url($request_uri, PHP_URL_PATH);
-$segments = explode('/', trim($path, '/'));
-$order_id = isset($segments[2]) && is_numeric($segments[2]) ? (int)$segments[2] : null;
+// Функция генерации логина и пароля
+function generate_login() {
+    return 'user_' . substr(md5(uniqid(mt_rand(), true)), 0, 8);
+}
+
+function generate_password() {
+    return substr(md5(uniqid(mt_rand(), true)), 0, 6);
+}
 
 // Валидация данных формы
 function validate_order_data($data) {
@@ -48,6 +51,12 @@ function validate_order_data($data) {
     return $errors;
 }
 
+$method = $_SERVER['REQUEST_METHOD'];
+$request_uri = $_SERVER['REQUEST_URI'];
+$path = parse_url($request_uri, PHP_URL_PATH);
+$segments = explode('/', trim($path, '/'));
+$order_id = isset($segments[3]) && is_numeric($segments[3]) ? (int)$segments[3] : null;
+
 // POST /api/application - создание нового заказа
 if ($method === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
@@ -64,7 +73,30 @@ if ($method === 'POST') {
     }
     
     try {
-        $stmt = $pdo->prepare("INSERT INTO orders (name, phone, email, dessert, date, servings, message) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        // Проверяем, авторизован ли пользователь
+        session_start();
+        $user_id = $_SESSION['user_id'] ?? null;
+        
+        if (!$user_id) {
+            // Создаём нового пользователя
+            $login = generate_login();
+            $plain_password = generate_password();
+            $password_hash = password_hash($plain_password, PASSWORD_DEFAULT);
+            
+            $stmt = $pdo->prepare("INSERT INTO users (login, password_hash) VALUES (?, ?)");
+            $stmt->execute([$login, $password_hash]);
+            $user_id = $pdo->lastInsertId();
+            
+            $generated_credentials = [
+                'login' => $login,
+                'password' => $plain_password
+            ];
+        } else {
+            $generated_credentials = null;
+        }
+        
+        // Сохраняем заказ
+        $stmt = $pdo->prepare("INSERT INTO orders (name, phone, email, dessert, date, servings, message, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([
             $input['name'],
             $input['phone'],
@@ -72,16 +104,24 @@ if ($method === 'POST') {
             $input['dessert'] ?? null,
             $input['date'] ?? null,
             $input['servings'] ?? null,
-            $input['message'] ?? null
+            $input['message'] ?? null,
+            $user_id
         ]);
         
         $order_id = $pdo->lastInsertId();
         
-        echo json_encode([
+        $response = [
             'success' => true,
             'message' => 'Заказ успешно отправлен! Мы свяжемся с вами в течение 2 часов.',
             'order_id' => $order_id
-        ]);
+        ];
+        
+        if ($generated_credentials) {
+            $response['credentials'] = $generated_credentials;
+            $response['message'] .= ' Сохраните логин и пароль для редактирования заказа.';
+        }
+        
+        echo json_encode($response);
     } catch (PDOException $e) {
         error_log($e->getMessage());
         http_response_code(500);
@@ -90,13 +130,25 @@ if ($method === 'POST') {
     exit();
 }
 
-// PUT /api/application/{id} - обновление заказа (для авторизованных)
+// PUT /api/application/{id} - обновление заказа
 if ($method === 'PUT' && $order_id) {
-    // Простая HTTP-авторизация (можно заменить на сессию)
-    if (empty($_SERVER['PHP_AUTH_USER']) || empty($_SERVER['PHP_AUTH_PW']) ||
-        $_SERVER['PHP_AUTH_USER'] !== 'admin' || md5($_SERVER['PHP_AUTH_PW']) !== md5('admin123')) {
+    session_start();
+    $user_id = $_SESSION['user_id'] ?? null;
+    
+    if (!$user_id) {
         http_response_code(401);
-        echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+        echo json_encode(['success' => false, 'error' => 'Unauthorized. Please login first.']);
+        exit();
+    }
+    
+    // Проверяем, принадлежит ли заказ этому пользователю
+    $stmt = $pdo->prepare("SELECT user_id FROM orders WHERE id = ?");
+    $stmt->execute([$order_id]);
+    $order = $stmt->fetch();
+    
+    if (!$order || $order['user_id'] != $user_id) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Forbidden. You can only edit your own orders.']);
         exit();
     }
     
@@ -126,12 +178,6 @@ if ($method === 'PUT' && $order_id) {
             $order_id
         ]);
         
-        if ($stmt->rowCount() === 0) {
-            http_response_code(404);
-            echo json_encode(['success' => false, 'error' => 'Заказ не найден']);
-            exit();
-        }
-        
         echo json_encode([
             'success' => true,
             'message' => 'Заказ успешно обновлён'
@@ -146,34 +192,35 @@ if ($method === 'PUT' && $order_id) {
 
 // GET /api/application/{id} - получение заказа
 if ($method === 'GET' && $order_id) {
-    if (empty($_SERVER['PHP_AUTH_USER']) || empty($_SERVER['PHP_AUTH_PW']) ||
-        $_SERVER['PHP_AUTH_USER'] !== 'admin' || md5($_SERVER['PHP_AUTH_PW']) !== md5('admin123')) {
+    session_start();
+    $user_id = $_SESSION['user_id'] ?? null;
+    
+    if (!$user_id) {
         http_response_code(401);
         echo json_encode(['success' => false, 'error' => 'Unauthorized']);
         exit();
     }
     
-    try {
-        $stmt = $pdo->prepare("SELECT * FROM orders WHERE id = ?");
-        $stmt->execute([$order_id]);
-        $order = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if (!$order) {
-            http_response_code(404);
-            echo json_encode(['success' => false, 'error' => 'Заказ не найден']);
-            exit();
-        }
-        
-        echo json_encode(['success' => true, 'data' => $order]);
-    } catch (PDOException $e) {
-        error_log($e->getMessage());
-        http_response_code(500);
-        echo json_encode(['success' => false, 'error' => 'Ошибка получения заказа']);
+    $stmt = $pdo->prepare("SELECT * FROM orders WHERE id = ?");
+    $stmt->execute([$order_id]);
+    $order = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$order) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Заказ не найден']);
+        exit();
     }
+    
+    if ($order['user_id'] != $user_id) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'error' => 'Forbidden']);
+        exit();
+    }
+    
+    echo json_encode(['success' => true, 'data' => $order]);
     exit();
 }
 
-// Если метод не разрешён
 http_response_code(405);
 echo json_encode(['success' => false, 'error' => 'Method not allowed']);
 ?>
