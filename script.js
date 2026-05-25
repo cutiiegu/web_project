@@ -282,10 +282,8 @@ if (userLoginForm) {
                 loginMessage.innerHTML = 'Вход выполнен успешно! Загружаем заказы...';
                 loginMessage.style.color = 'green';
                 
-                // Закрываем модальное окно входа
                 if (loginModal) loginModal.style.display = 'none';
                 
-                // Загружаем заказы пользователя
                 await loadAndShowOrders();
             } else {
                 loginMessage.innerHTML = result.error || 'Неверный логин или пароль';
@@ -420,7 +418,7 @@ function showEditForm(order) {
     modal.style.display = 'block';
     
     const formHtml = `
-        <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-content" style="max-width: 550px; max-height: 85vh; overflow-y: auto; margin: 2% auto;">
             <span class="close" onclick="document.getElementById('editOrderModal').style.display='none'">&times;</span>
             <h3>Редактирование заказа #${order.id}</h3>
             <form id="editOrderForm">
@@ -438,11 +436,11 @@ function showEditForm(order) {
                     </select>
                 </div>
                 <div class="form-group"><label>Дата получения:</label><input type="date" name="date" value="${order.date || ''}" class="form-control"></div>
-                <div class="form-group"><label>Количество персон:</label><input type="number" name="servings" value="${order.servings || ''}" class="form-control"></div>
-                <div class="form-group"><label>Пожелания:</label><textarea name="message" rows="3" class="form-control">${escapeHtml(order.message || '')}</textarea></div>
-                <button type="submit" class="btn">Сохранить изменения</button>
+                <div class="form-group"><label>Количество персон:</label><input type="number" name="servings" value="${order.servings || ''}" class="form-control" min="1" max="50"></div>
+                <div class="form-group"><label>Пожелания:</label><textarea name="message" rows="4" class="form-control">${escapeHtml(order.message || '')}</textarea></div>
+                <button type="submit" class="btn" style="width: 100%; margin-top: 10px;">Сохранить изменения</button>
             </form>
-            <div id="editMessage"></div>
+            <div id="editMessage" style="margin-top: 15px;"></div>
         </div>
     `;
     
@@ -488,9 +486,7 @@ async function checkAuth() {
         });
         const result = await response.json();
         if (result.success && result.orders !== undefined) {
-            // Пользователь авторизован, показываем его заказы
             if (result.orders && result.orders.length > 0) {
-                // Можем показать кнопку "Мои заказы" в шапке
                 const authLinks = document.querySelector('.auth-links');
                 if (authLinks && !document.getElementById('myOrdersBtn')) {
                     const ordersBtn = document.createElement('a');
