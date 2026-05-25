@@ -196,21 +196,23 @@ if (orderForm) {
             
             if (response.ok && result.success) {
                 let messageText = result.message || 'Заказ успешно отправлен!';
+                
+                // credentials остаются на экране (не исчезают)
                 if (result.credentials) {
-                    messageText += '<br><br><strong>Сохраните данные для входа:</strong><br>';
+                    messageText = '<div class="credentials-message">';
+                    messageText += '<strong>✅ Заказ успешно отправлен!</strong><br><br>';
+                    messageText += '<strong>Сохраните данные для входа:</strong><br>';
                     messageText += 'Логин: <strong>' + result.credentials.login + '</strong><br>';
-                    messageText += 'Пароль: <strong>' + result.credentials.password + '</strong><br>';
-                    messageText += 'Вы можете использовать их для редактирования заказа.';
+                    messageText += 'Пароль: <strong>' + result.credentials.password + '</strong><br><br>';
+                    messageText += 'Вы можете использовать их для входа в личный кабинет.';
+                    messageText += '</div>';
                 }
+                
                 if (formMessage) {
                     formMessage.innerHTML = messageText;
                     orderForm.reset();
-                    setTimeout(() => {
-                        if (formMessage) {
-                            formMessage.style.display = 'none';
-                            formMessage.innerHTML = '';
-                        }
-                    }, 10000);
+                    // НЕ УДАЛЯЕМ СООБЩЕНИЕ АВТОМАТИЧЕСКИ
+                    // Оно остаётся до перезагрузки страницы
                 }
             } else {
                 let errorText = 'Ошибка при отправке. ';
@@ -225,13 +227,6 @@ if (orderForm) {
                 formMessage.classList.remove('success');
                 formMessage.classList.add('error');
                 formMessage.style.display = 'block';
-                setTimeout(() => {
-                    if (formMessage) {
-                        formMessage.style.display = 'none';
-                        formMessage.classList.remove('error');
-                        formMessage.innerHTML = '';
-                    }
-                }, 5000);
             }
         } finally {
             if (submitBtn) {
@@ -287,17 +282,17 @@ if (userLoginForm) {
             const result = await response.json();
             
             if (response.ok && result.success) {
-                loginMessage.innerHTML = 'Вход выполнен успешно! Перезагружаем...';
+                loginMessage.innerHTML = '✅ Вход выполнен успешно! Перезагружаем страницу...';
                 loginMessage.style.color = 'green';
                 sessionStorage.setItem('userLoggedIn', 'true');
                 sessionStorage.setItem('userId', result.user.id);
                 setTimeout(() => window.location.reload(), 1500);
             } else {
-                loginMessage.innerHTML = result.error || 'Неверный логин или пароль';
+                loginMessage.innerHTML = '❌ ' + (result.error || 'Неверный логин или пароль');
                 loginMessage.style.color = 'red';
             }
         } catch (error) {
-            loginMessage.innerHTML = 'Ошибка сети. Попробуйте позже.';
+            loginMessage.innerHTML = '❌ Ошибка сети. Попробуйте позже.';
             loginMessage.style.color = 'red';
         }
     });
