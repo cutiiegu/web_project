@@ -60,7 +60,6 @@ function createSliderDots() {
         if (i === 0) dot.classList.add('active');
         dot.setAttribute('data-slide', i);
         sliderDots.appendChild(dot);
-        
         dot.addEventListener('click', () => {
             goToSlide(i);
             resetSlideInterval();
@@ -72,7 +71,6 @@ function goToSlide(slideIndex) {
     if (!slider) return;
     currentSlide = slideIndex;
     slider.style.transform = `translateX(-${currentSlide * 100}%)`;
-    
     const dots = document.querySelectorAll('.slider-dot');
     dots.forEach((dot, index) => {
         dot.classList.toggle('active', index === currentSlide);
@@ -98,7 +96,6 @@ if (sliderPrev && sliderNext) {
         goToSlide(currentSlide);
         resetSlideInterval();
     });
-
     sliderNext.addEventListener('click', () => {
         currentSlide = (currentSlide + 1) % totalSlides;
         goToSlide(currentSlide);
@@ -108,21 +105,15 @@ if (sliderPrev && sliderNext) {
 
 const sliderContainer = document.querySelector('.slider-container');
 if (sliderContainer) {
-    sliderContainer.addEventListener('mouseenter', () => {
-        clearInterval(slideInterval);
-    });
-
-    sliderContainer.addEventListener('mouseleave', () => {
-        startSlideInterval();
-    });
+    sliderContainer.addEventListener('mouseenter', () => clearInterval(slideInterval));
+    sliderContainer.addEventListener('mouseleave', () => startSlideInterval());
 }
 
 createSliderDots();
 startSlideInterval();
 
-// FAQ - Аккордеон
+// FAQ
 const faqItems = document.querySelectorAll('.faq-item');
-
 faqItems.forEach(item => {
     const question = item.querySelector('.faq-question');
     if (question) {
@@ -140,32 +131,22 @@ faqItems.forEach(item => {
 // Плавная прокрутка
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function(e) {
-        if (this.classList.contains('dropdown-item') || 
-            this.getAttribute('href') === '#') {
-            return;
-        }
-        
+        if (this.classList.contains('dropdown-item') || this.getAttribute('href') === '#') return;
         e.preventDefault();
-        
         const targetId = this.getAttribute('href');
         if (targetId === '#') return;
-        
         const targetElement = document.querySelector(targetId);
         if (targetElement) {
             if (navMobile && navMobile.classList.contains('active')) {
                 navMobile.classList.remove('active');
                 document.body.style.overflow = 'auto';
             }
-            
-            window.scrollTo({
-                top: targetElement.offsetTop - 80,
-                behavior: 'smooth'
-            });
+            window.scrollTo({ top: targetElement.offsetTop - 80, behavior: 'smooth' });
         }
     });
 });
 
-// Изменение навигации при скролле
+// Навигация при скролле
 const navbar = document.querySelector('.navbar');
 window.addEventListener('scroll', () => {
     if (navbar) {
@@ -179,10 +160,7 @@ window.addEventListener('scroll', () => {
     }
 });
 
-// ================================================
-// AJAX ОТПРАВКА ФОРМЫ НА ТВОЙ API
-// ================================================
-
+// ========== ОТПРАВКА ФОРМЫ ==========
 const orderForm = document.getElementById('orderForm');
 const formMessage = document.getElementById('formMessage');
 const submitBtn = document.getElementById('submitBtn');
@@ -206,17 +184,11 @@ if (orderForm) {
         try {
             const formData = new FormData(orderForm);
             const data = {};
-            formData.forEach((value, key) => {
-                data[key] = value;
-            });
+            formData.forEach((value, key) => { data[key] = value; });
             
-            // Отправка на твой API
             const response = await fetch('/web_project/api/application', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify(data)
             });
             
@@ -224,19 +196,15 @@ if (orderForm) {
             
             if (response.ok && result.success) {
                 let messageText = result.message || 'Заказ успешно отправлен!';
-                
-                // Если пришли credentials (логин и пароль), показываем их
                 if (result.credentials) {
                     messageText += '<br><br><strong>Сохраните данные для входа:</strong><br>';
                     messageText += 'Логин: <strong>' + result.credentials.login + '</strong><br>';
                     messageText += 'Пароль: <strong>' + result.credentials.password + '</strong><br>';
                     messageText += 'Вы можете использовать их для редактирования заказа.';
                 }
-                
                 if (formMessage) {
                     formMessage.innerHTML = messageText;
                     orderForm.reset();
-                    
                     setTimeout(() => {
                         if (formMessage) {
                             formMessage.style.display = 'none';
@@ -246,23 +214,17 @@ if (orderForm) {
                 }
             } else {
                 let errorText = 'Ошибка при отправке. ';
-                if (result.errors) {
-                    errorText += Object.values(result.errors).join(' ');
-                } else if (result.error) {
-                    errorText += result.error;
-                }
+                if (result.errors) errorText += Object.values(result.errors).join(' ');
+                else if (result.error) errorText += result.error;
                 throw new Error(errorText);
             }
-            
         } catch (error) {
-            console.error('Ошибка отправки:', error);
-            
+            console.error('Ошибка:', error);
             if (formMessage) {
-                formMessage.innerHTML = error.message || 'Ошибка при отправке. Пожалуйста, попробуйте еще раз.';
+                formMessage.innerHTML = error.message || 'Ошибка при отправке. Попробуйте еще раз.';
                 formMessage.classList.remove('success');
                 formMessage.classList.add('error');
                 formMessage.style.display = 'block';
-                
                 setTimeout(() => {
                     if (formMessage) {
                         formMessage.style.display = 'none';
@@ -271,7 +233,6 @@ if (orderForm) {
                     }
                 }, 5000);
             }
-            
         } finally {
             if (submitBtn) {
                 submitBtn.textContent = "Отправить заявку";
@@ -281,38 +242,94 @@ if (orderForm) {
     });
 }
 
-// ================================================
-// ФУНКЦИИ ДЛЯ РЕДАКТИРОВАНИЯ ЗАКАЗА (если нужны)
-// ================================================
+// ========== МОДАЛЬНОЕ ОКНО ДЛЯ ВХОДА ==========
+const loginLink = document.getElementById('loginLink');
+const loginModal = document.getElementById('loginModal');
+const closeModal = document.querySelector('.close');
+const userLoginForm = document.getElementById('userLoginForm');
+const loginMessage = document.getElementById('loginMessage');
 
-async function editOrder(orderId, data) {
-    try {
-        const response = await fetch(`/web_project/api/application/${orderId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(data)
-        });
-        return await response.json();
-    } catch (error) {
-        console.error('Ошибка редактирования:', error);
-        return { success: false, error: 'Ошибка сети' };
-    }
+if (loginLink) {
+    loginLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (loginModal) loginModal.style.display = 'block';
+    });
 }
 
-async function getOrder(orderId) {
-    try {
-        const response = await fetch(`/web_project/api/application/${orderId}`, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json'
+if (closeModal) {
+    closeModal.addEventListener('click', () => {
+        if (loginModal) loginModal.style.display = 'none';
+    });
+}
+
+window.addEventListener('click', (e) => {
+    if (e.target === loginModal) loginModal.style.display = 'none';
+});
+
+if (userLoginForm) {
+    userLoginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const login = document.getElementById('userLogin').value;
+        const password = document.getElementById('userPassword').value;
+        
+        if (loginMessage) {
+            loginMessage.innerHTML = 'Вход...';
+            loginMessage.style.color = '#DAA520';
+        }
+        
+        try {
+            const response = await fetch('/web_project/api/login.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ login, password })
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok && result.success) {
+                loginMessage.innerHTML = 'Вход выполнен успешно! Перезагружаем...';
+                loginMessage.style.color = 'green';
+                sessionStorage.setItem('userLoggedIn', 'true');
+                sessionStorage.setItem('userId', result.user.id);
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                loginMessage.innerHTML = result.error || 'Неверный логин или пароль';
+                loginMessage.style.color = 'red';
             }
+        } catch (error) {
+            loginMessage.innerHTML = 'Ошибка сети. Попробуйте позже.';
+            loginMessage.style.color = 'red';
+        }
+    });
+}
+
+// Проверка авторизации
+async function checkAuth() {
+    try {
+        const response = await fetch('/web_project/api/check.php', {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
         });
-        return await response.json();
+        const result = await response.json();
+        if (result.success && result.logged_in) {
+            const authLinks = document.querySelector('.auth-links');
+            if (authLinks && !document.getElementById('editProfileLink')) {
+                const editLink = document.createElement('a');
+                editLink.id = 'editProfileLink';
+                editLink.href = '#';
+                editLink.className = 'auth-link';
+                editLink.textContent = 'Мои заказы';
+                editLink.style.marginLeft = '10px';
+                editLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    alert('Функция просмотра заказов в разработке');
+                });
+                authLinks.appendChild(editLink);
+            }
+        }
     } catch (error) {
-        console.error('Ошибка получения заказа:', error);
-        return { success: false, error: 'Ошибка сети' };
+        console.error('Ошибка проверки авторизации:', error);
     }
 }
+
+document.addEventListener('DOMContentLoaded', checkAuth);
