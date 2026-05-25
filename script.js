@@ -20,8 +20,10 @@ if (closeMenu) {
 const mobileLinks = document.querySelectorAll('.nav-mobile .nav-link');
 mobileLinks.forEach(link => {
     link.addEventListener('click', () => {
-        navMobile.classList.remove('active');
-        document.body.style.overflow = 'auto';
+        if (navMobile) {
+            navMobile.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
     });
 });
 
@@ -31,8 +33,10 @@ const mobileDropdown = document.querySelector('.mobile-dropdown');
 if (mobileDropdownToggle) {
     mobileDropdownToggle.addEventListener('click', (e) => {
         e.preventDefault();
-        mobileDropdown.classList.toggle('active');
-        mobileDropdownToggle.classList.toggle('active');
+        if (mobileDropdown) {
+            mobileDropdown.classList.toggle('active');
+            mobileDropdownToggle.classList.toggle('active');
+        }
     });
 }
 
@@ -188,7 +192,6 @@ if (orderForm) {
         e.preventDefault();
         
         if (submitBtn) {
-            const originalBtnText = submitBtn.textContent;
             submitBtn.textContent = "Отправка...";
             submitBtn.disabled = true;
         }
@@ -197,6 +200,7 @@ if (orderForm) {
             formMessage.textContent = 'Отправляем ваш заказ...';
             formMessage.classList.remove('error');
             formMessage.classList.add('success');
+            formMessage.style.display = 'block';
         }
         
         try {
@@ -207,7 +211,7 @@ if (orderForm) {
             });
             
             // Отправка на твой API
-            const response = await fetch('/lab8/api/application', {
+            const response = await fetch('/web_project/api/application', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -219,16 +223,26 @@ if (orderForm) {
             const result = await response.json();
             
             if (response.ok && result.success) {
+                let messageText = result.message || 'Заказ успешно отправлен!';
+                
+                // Если пришли credentials (логин и пароль), показываем их
+                if (result.credentials) {
+                    messageText += '<br><br><strong>Сохраните данные для входа:</strong><br>';
+                    messageText += 'Логин: <strong>' + result.credentials.login + '</strong><br>';
+                    messageText += 'Пароль: <strong>' + result.credentials.password + '</strong><br>';
+                    messageText += 'Вы можете использовать их для редактирования заказа.';
+                }
+                
                 if (formMessage) {
-                    formMessage.textContent = result.message || 'Заказ успешно отправлен!';
+                    formMessage.innerHTML = messageText;
                     orderForm.reset();
                     
                     setTimeout(() => {
                         if (formMessage) {
-                            formMessage.classList.remove('success');
-                            formMessage.textContent = '';
+                            formMessage.style.display = 'none';
+                            formMessage.innerHTML = '';
                         }
-                    }, 7000);
+                    }, 10000);
                 }
             } else {
                 let errorText = 'Ошибка при отправке. ';
@@ -244,13 +258,17 @@ if (orderForm) {
             console.error('Ошибка отправки:', error);
             
             if (formMessage) {
-                formMessage.textContent = error.message || 'Ошибка при отправке. Пожалуйста, попробуйте еще раз.';
+                formMessage.innerHTML = error.message || 'Ошибка при отправке. Пожалуйста, попробуйте еще раз.';
                 formMessage.classList.remove('success');
                 formMessage.classList.add('error');
+                formMessage.style.display = 'block';
                 
                 setTimeout(() => {
-                    formMessage.classList.remove('error');
-                    formMessage.textContent = '';
+                    if (formMessage) {
+                        formMessage.style.display = 'none';
+                        formMessage.classList.remove('error');
+                        formMessage.innerHTML = '';
+                    }
                 }, 5000);
             }
             
@@ -261,4 +279,40 @@ if (orderForm) {
             }
         }
     });
+}
+
+// ================================================
+// ФУНКЦИИ ДЛЯ РЕДАКТИРОВАНИЯ ЗАКАЗА (если нужны)
+// ================================================
+
+async function editOrder(orderId, data) {
+    try {
+        const response = await fetch(`/web_project/api/application/${orderId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        return await response.json();
+    } catch (error) {
+        console.error('Ошибка редактирования:', error);
+        return { success: false, error: 'Ошибка сети' };
+    }
+}
+
+async function getOrder(orderId) {
+    try {
+        const response = await fetch(`/web_project/api/application/${orderId}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        return await response.json();
+    } catch (error) {
+        console.error('Ошибка получения заказа:', error);
+        return { success: false, error: 'Ошибка сети' };
+    }
 }
