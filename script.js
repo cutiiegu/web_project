@@ -27,15 +27,27 @@ mobileLinks.forEach(link => {
     });
 });
 
-// Работа с окном входа (Логин)
+const mobileDropdownToggle = document.querySelector('.mobile-dropdown-toggle');
+const mobileDropdown = document.querySelector('.mobile-dropdown');
+
+if (mobileDropdownToggle) {
+    mobileDropdownToggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (mobileDropdown) {
+            mobileDropdown.classList.toggle('active');
+            mobileDropdownToggle.classList.toggle('active');
+        }
+    });
+}
+
+// Модальное окно входа (Логин)
 const loginLink = document.getElementById('loginLink');
 const loginModal = document.getElementById('loginModal');
-const closeLoginModal = document.getElementById('closeLoginModal');
+const closeLoginModal = document.querySelector('#loginModal .close');
 
 if (loginLink) {
     loginLink.addEventListener('click', (e) => {
         e.preventDefault();
-        // Открываем логин, только если не авторизованы
         if (!loginLink.innerHTML.includes('fa-user')) {
             loginModal.style.display = 'block';
         }
@@ -48,7 +60,7 @@ if (closeLoginModal) {
     });
 }
 
-// Отправка главного заказа
+// Отправка основного заказа
 const orderForm = document.getElementById('orderForm');
 const formMessage = document.getElementById('formMessage');
 
@@ -73,9 +85,9 @@ if (orderForm) {
         }
 
         try {
-            const response = await fetch('api/application', {
+            const response = await fetch('/web_project/api/application', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify(formData)
             });
 
@@ -84,42 +96,70 @@ if (orderForm) {
             if (response.ok && result.success) {
                 let messageText = result.message || 'Заказ успешно отправлен!';
                 
-                // Если сгенерировались доступы
                 if (result.credentials) {
                     messageText = `
-                        <div class="credentials-message" style="background:#fff5ee; padding:15px; border:1px solid #dda0dd; border-radius:6px; margin-top:15px; color:#8b4513;">
-                            <p><strong>✨ Заказ принят! Создан ваш личный кабинет:</strong></p>
-                            <p>Логин: <strong style="color:#dda0dd;">${result.credentials.login}</strong></p>
-                            <p>Пароль: <strong style="color:#dda0dd;">${result.credentials.password}</strong></p>
-                            <p style="font-size:0.85em; margin-top:5px; color:gray;">Используйте их для просмотра и редактирования заказов сверху меню.</p>
+                        <div class="credentials-message" style="background: #FFF5EE; padding: 15px; border: 1px solid var(--primary-dark); border-radius: 6px; margin-top: 15px;">
+                            <p><strong>✨ Заказ оформлен! Создан ваш личный кабинет:</strong></p>
+                            <p>Логин: <strong>${result.credentials.login}</strong></p>
+                            <p>Пароль: <strong>${result.credentials.password}</strong></p>
+                            <p style="font-size: 0.85em; color: gray; margin-top: 5px;">Используйте их для просмотра ваших заказов вверху страницы.</p>
                         </div>
                     `;
                 }
                 
-                if (formMessage) {
-                    formMessage.innerHTML = messageText;
-                }
+                if (formMessage) formMessage.innerHTML = messageText;
                 orderForm.reset();
-                // Обновляем статус кнопок
                 checkAuth();
             } else {
                 let errText = 'Произошла ошибка при отправке.';
                 if (result.errors) {
                     errText = Object.values(result.errors).join('<br>');
                 }
-                if (formMessage) {
-                    formMessage.innerHTML = `<div class="error" style="color:red;">${errText}</div>`;
-                }
+                if (formMessage) formMessage.innerHTML = `<div class="error" style="color:red;">${errText}</div>`;
             }
         } catch (error) {
-            if (formMessage) {
-                formMessage.innerHTML = '<div class="error" style="color:red;">Ошибка сети при отправке заказа.</div>';
-            }
+            if (formMessage) formMessage.innerHTML = '<div class="error" style="color:red;">Ошибка сети при отправке заказа.</div>';
         }
     });
 }
 
-// --- ИНТЕГРАЦИЯ ПОП-АПОВ ЛИЧНОГО КАБИНЕТА ---
+// Авторизация пользователя (форма)
+const userLoginForm = document.getElementById('userLoginForm');
+if (userLoginForm) {
+    userLoginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const loginVal = document.getElementById('userLogin').value;
+        const passVal = document.getElementById('userPassword').value;
+
+        try {
+            const response = await fetch('/web_project/api/login.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({ login: loginVal, password: passVal })
+            });
+            const result = await response.json();
+            const msgDiv = document.getElementById('loginMessage');
+
+            if (result.success) {
+                msgDiv.innerHTML = '<div class="success" style="color:green; margin-top:10px;">Вход выполнен успешно!</div>';
+                if (loginLink) loginLink.innerHTML = `<i class="fas fa-user"></i> ${result.user.login}`;
+                const ordersLink = document.getElementById('ordersLink');
+                if (ordersLink) ordersLink.style.display = 'inline-block';
+                
+                setTimeout(() => {
+                    loginModal.style.display = 'none';
+                    msgDiv.innerHTML = '';
+                }, 1000);
+            } else {
+                msgDiv.innerHTML = `<div class="error" style="color:red; margin-top:10px;">${result.error || 'Ошибка входа'}</div>`;
+            }
+        } catch (error) {
+            document.getElementById('loginMessage').innerHTML = '<div class="error" style="color:red; margin-top:10px;">Ошибка сервера</div>';
+        }
+    });
+}
+
+// --- ЛОГИКА ПОП-АПОВ ПРОСМОТРА И РЕДАКТИРОВАНИЯ ЗАКАЗОВ ---
 document.addEventListener('DOMContentLoaded', () => {
     const ordersLink = document.getElementById('ordersLink');
     const ordersModal = document.getElementById('ordersModal');
@@ -128,7 +168,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeEditModal = document.getElementById('closeEditModal');
     const editOrderForm = document.getElementById('editOrderForm');
 
-    // Открытие списка заказов
     if (ordersLink) {
         ordersLink.addEventListener('click', (e) => {
             e.preventDefault();
@@ -137,7 +176,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Закрытие модальных окон
     if (closeOrdersModal) closeOrdersModal.addEventListener('click', () => ordersModal.style.display = 'none');
     if (closeEditModal) closeEditModal.addEventListener('click', () => editOrderModal.style.display = 'none');
 
@@ -147,42 +185,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === editOrderModal) editOrderModal.style.display = 'none';
     });
 
-    // Обработка авторизации через форму
-    const userLoginForm = document.getElementById('userLoginForm');
-    if (userLoginForm) {
-        userLoginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const loginVal = document.getElementById('userLogin').value;
-            const passVal = document.getElementById('userPassword').value;
-
-            try {
-                const response = await fetch('api/login.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ login: loginVal, password: passVal })
-                });
-                const result = await response.json();
-                const msgDiv = document.getElementById('loginMessage');
-
-                if (result.success) {
-                    msgDiv.innerHTML = '<div style="color:green; margin-top:10px;">Вход выполнен успешно!</div>';
-                    if (loginLink) loginLink.innerHTML = `<i class="fas fa-user"></i> ${result.user.login}`;
-                    if (ordersLink) ordersLink.style.display = 'inline-block';
-                    
-                    setTimeout(() => {
-                        loginModal.style.display = 'none';
-                        msgDiv.innerHTML = '';
-                    }, 1000);
-                } else {
-                    msgDiv.innerHTML = `<div style="color:red; margin-top:10px;">${result.error || 'Ошибка входа'}</div>`;
-                }
-            } catch (error) {
-                document.getElementById('loginMessage').innerHTML = '<div style="color:red; margin-top:10px;">Ошибка сервера</div>';
-            }
-        });
-    }
-
-    // Отправка отредактированного заказа (PUT)
     if (editOrderForm) {
         editOrderForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -197,38 +199,40 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             try {
-                const response = await fetch(`api/application/${orderId}`, {
+                const response = await fetch(`/web_project/api/application/${orderId}`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                     body: JSON.stringify(data)
                 });
                 const result = await response.json();
-                const msgDiv = document.getElementById('editMessageDiv');
+                const msgDiv = document.getElementById('editMessage');
 
                 if (result.success) {
-                    msgDiv.innerHTML = '<div style="color: green; font-weight:bold; margin-top:10px;">Заказ изменен!</div>';
-                    loadUserOrders(); // Перезагружаем карточки
+                    msgDiv.innerHTML = '<div class="form-message success" style="display:block; margin-top:15px; color:green; font-weight:bold;">Заказ обновлён!</div>';
+                    loadUserOrders();
                     setTimeout(() => {
                         editOrderModal.style.display = 'none';
                         msgDiv.innerHTML = '';
                     }, 1200);
                 } else {
-                    msgDiv.innerHTML = `<div style="color: red; margin-top:10px;">${result.error || 'Ошибка изменения'}</div>`;
+                    msgDiv.innerHTML = '<div class="form-message error" style="display:block; margin-top:15px; color:red;">' + (result.error || 'Ошибка') + '</div>';
                 }
             } catch (error) {
-                console.error(error);
+                document.getElementById('editMessage').innerHTML = '<div class="form-message error" style="display:block; margin-top:15px; color:red;">Ошибка сети</div>';
             }
         });
     }
 
-    // Проверяем статус входа при запуске
     checkAuth();
 });
 
 // Проверка сессии
 async function checkAuth() {
     try {
-        const response = await fetch('api/check.php');
+        const response = await fetch('/web_project/api/check.php', {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+        });
         const result = await response.json();
         
         const lLink = document.getElementById('loginLink');
@@ -239,19 +243,22 @@ async function checkAuth() {
             if (oLink) oLink.style.display = 'inline-block';
         }
     } catch (error) {
-        console.error('Ошибка проверки:', error);
+        console.error('Ошибка авторизации:', error);
     }
 }
 
-// Загрузка заказов пользователя
+// Рендеринг карточек заказов пользователя
 async function loadUserOrders() {
     const listDiv = document.getElementById('userOrdersList');
     if (!listDiv) return;
 
-    listDiv.innerHTML = '<p style="text-align:center; color:#8b4513;">Загрузка списка ваших заказов...</p>';
+    listDiv.innerHTML = '<p style="text-align:center; color: var(--dark);">Загрузка ваших заказов...</p>';
 
     try {
-        const response = await fetch('api/application');
+        const response = await fetch('/web_project/api/application', {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+        });
         const result = await response.json();
 
         if (result.success && result.orders && result.orders.length > 0) {
@@ -268,8 +275,8 @@ async function loadUserOrders() {
                 card.innerHTML = `
                     <div class="order-info">
                         <h4>Заказ №${order.id} — ${dDessert}</h4>
-                        <p><strong>Дата доставки:</strong> ${dDate} | <strong>Гости:</strong> ${order.servings || '-'}</p>
-                        <p><strong>Контактное лицо:</strong> ${order.name} (${order.phone})</p>
+                        <p><strong>Дата доставки:</strong> ${dDate} | <strong>Гостей:</strong> ${order.servings || '-'}</p>
+                        <p><strong>Контакт:</strong> ${order.name} (${order.phone})</p>
                         ${order.message ? `<p><strong>Пожелания:</strong> ${order.message}</p>` : ''}
                     </div>
                     <div class="order-actions">
@@ -284,11 +291,11 @@ async function loadUserOrders() {
             listDiv.innerHTML = '<div class="no-orders">У вас пока нет оформленных заказов.</div>';
         }
     } catch (error) {
-        listDiv.innerHTML = '<div class="no-orders" style="color:red;">Произошла ошибка связи с сервером.</div>';
+        listDiv.innerHTML = '<div class="no-orders" style="color:red;">Ошибка при получении списка заказов.</div>';
     }
 }
 
-// Предзаполнение полей редактирования
+// Открытие поп-апа изменения и подгрузка данных
 function openEditOrderPopup(order) {
     document.getElementById('editOrderId').value = order.id;
     document.getElementById('editName').value = order.name;
@@ -296,7 +303,7 @@ function openEditOrderPopup(order) {
     document.getElementById('editEmail').value = order.email || '';
     document.getElementById('editServings').value = order.servings || '';
     document.getElementById('editMessage').value = order.message || '';
-    document.getElementById('editMessageDiv').innerHTML = '';
+    document.getElementById('editMessage').innerHTML = '';
     
     document.getElementById('editOrderModal').style.display = 'block';
 }
