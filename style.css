@@ -1,5 +1,5 @@
+/* ========== MOBILE-FIRST СТИЛИ ========== */
 
-/* CSS Reset и базовые стили */
 * {
     margin: 0;
     padding: 0;
@@ -638,7 +638,7 @@ header {
     font-size: 0.9rem;
 }
 
-/* Форма */
+/* Форма - ОРИГИНАЛЬНЫЙ СТИЛЬ */
 .form-section {
     background-color: var(--light);
 }
@@ -686,6 +686,7 @@ header {
     gap: 1.5rem;
 }
 
+/* Сообщение формы */
 .form-message {
     margin-top: 1.5rem;
     padding: 1rem;
@@ -707,22 +708,22 @@ header {
     display: block;
 }
 
-/* Сообщение с логином и паролем */
+/* Сообщение с логином и паролем - ПРОСТОЙ СТИЛЬ, БЕЗ ГРАДИЕНТОВ */
 .credentials-message {
-    background: linear-gradient(135deg, #fff0f5, #ffe0e7);
-    border: 2px solid var(--primary);
-    border-radius: 15px;
-    padding: 15px;
-    margin: 15px 0;
+    background-color: #f0f8ff;
+    border: 1px solid #b0e0e6;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 10px 0;
     text-align: center;
+    font-size: 14px;
 }
 
 .credentials-message strong {
-    color: var(--primary-dark);
-    font-size: 16px;
+    color: #2e8b57;
 }
 
-/* Модальное окно */
+/* Модальное окно - ПРОСТОЙ СТИЛЬ */
 .modal {
     display: none;
     position: fixed;
@@ -735,11 +736,11 @@ header {
 }
 
 .modal-content {
-    background: linear-gradient(135deg, #fff5ee, #ffe4e1);
+    background-color: white;
     margin: 15% auto;
-    padding: 30px;
-    border: 2px solid var(--primary);
-    border-radius: 20px;
+    padding: 25px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
     width: 90%;
     max-width: 400px;
     position: relative;
@@ -750,26 +751,24 @@ header {
     color: var(--dark);
     text-align: center;
     margin-bottom: 20px;
-    font-family: 'Montserrat', sans-serif;
 }
 
 .modal-content .close {
     position: absolute;
-    right: 20px;
-    top: 15px;
-    font-size: 28px;
+    right: 15px;
+    top: 10px;
+    font-size: 24px;
     cursor: pointer;
-    color: var(--gray);
+    color: #999;
 }
 
 .modal-content .close:hover {
-    color: var(--primary-dark);
+    color: #333;
 }
 
 .modal-content .btn {
     width: 100%;
     margin-top: 10px;
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
 }
 
 #loginMessage {
