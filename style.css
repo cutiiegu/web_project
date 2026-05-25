@@ -922,7 +922,7 @@ footer {
 }
 
 /* ==========================================================================
-   СТИЛИ ДЛЯ ЛИЧНОГО КАБИНЕТА И МОДАЛЬНЫХ ОКОН ЗАКАЗОВ
+   ДОПОЛНЕНИЕ ДЛЯ ЛИЧНОГО КАБИНЕТА И РЕДАКТИРОВАНИЯ ЗАКАЗОВ
    ========================================================================== */
 .modal-large {
     max-width: 750px;
@@ -946,14 +946,14 @@ footer {
 }
 
 .order-card:hover {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
     border-color: var(--dark);
 }
 
 .order-info h4 {
     color: var(--dark);
     margin-bottom: 6px;
-    font-size: 1.05rem;
+    font-size: 1.1rem;
 }
 
 .order-info p {
@@ -968,7 +968,7 @@ footer {
 }
 
 .btn-sm {
-    padding: 7px 14px;
+    padding: 6px 12px;
     font-size: 0.85rem;
     cursor: pointer;
     font-family: 'Montserrat', sans-serif;
@@ -985,7 +985,6 @@ footer {
 
 .btn-edit-order:hover {
     background-color: var(--primary-dark);
-    transform: scale(1.02);
 }
 
 .no-orders {
