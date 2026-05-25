@@ -920,3 +920,60 @@ footer {
         max-width: 1140px;
     }
 }
+
+/* Модальное окно */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 25px;
+    border: 1px solid #e0c9b8;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 800px;
+    position: relative;
+    box-shadow: var(--shadow);
+}
+
+.modal-content h3 {
+    color: var(--dark);
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.modal-content .close {
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    font-size: 28px;
+    cursor: pointer;
+    color: #999;
+}
+
+.modal-content .close:hover {
+    color: #333;
+}
+
+.modal-content .btn {
+    margin-top: 10px;
+}
+
+.credentials-message {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 15px 0;
+    text-align: center;
+    color: #155724;
+}
