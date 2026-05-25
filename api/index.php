@@ -50,6 +50,7 @@ if ($method === 'POST') {
     if (!$user_id) {
         $login = generate_login();
         $plain_password = generate_password();
+        // ВАЖНО: используем password_hash() для совместимости с login.php
         $stmt = $pdo->prepare("INSERT INTO users (login, password_hash) VALUES (?, ?)");
         $stmt->execute([$login, password_hash($plain_password, PASSWORD_DEFAULT)]);
         $user_id = $pdo->lastInsertId();
@@ -60,7 +61,9 @@ if ($method === 'POST') {
     $stmt->execute([$input['name'], $input['phone'], $input['email'] ?? null, $input['dessert'] ?? null, $input['date'] ?? null, $input['servings'] ?? null, $input['message'] ?? null, $user_id]);
     
     $response = ['success' => true, 'message' => 'Заказ отправлен!', 'order_id' => $pdo->lastInsertId()];
-    if ($generated_credentials) $response['credentials'] = $generated_credentials;
+    if ($generated_credentials) {
+        $response['credentials'] = $generated_credentials;
+    }
     echo json_encode($response);
     exit();
 }
