@@ -13,14 +13,18 @@ if (empty($_SERVER['PHP_AUTH_USER']) || empty($_SERVER['PHP_AUTH_PW']) ||
     exit();
 }
 
-if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
-    $id = (int)$_GET['delete'];
+$message = '';
+$edit_order = null;
+
+// Обработка удаления через POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_id'])) {
+    $delete_id = (int)$_POST['delete_id'];
     $stmt = $pdo->prepare("DELETE FROM orders WHERE id = ?");
-    $stmt->execute([$id]);
+    $stmt->execute([$delete_id]);
     $message = '<div class="success">Заказ удалён</div>';
 }
 
-$edit_order = null;
+// Получение данных для редактирования
 if (isset($_GET['edit']) && is_numeric($_GET['edit'])) {
     $id = (int)$_GET['edit'];
     $stmt = $pdo->prepare("SELECT * FROM orders WHERE id = ?");
@@ -28,6 +32,7 @@ if (isset($_GET['edit']) && is_numeric($_GET['edit'])) {
     $edit_order = $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
+// Обработка обновления заказа
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_id'])) {
     $update_id = (int)$_POST['update_id'];
     $stmt = $pdo->prepare("UPDATE orders SET name = ?, phone = ?, email = ?, dessert = ?, date = ?, servings = ?, message = ? WHERE id = ?");
@@ -69,6 +74,9 @@ $total_orders = count($orders);
         .edit-form input, .edit-form select, .edit-form textarea { width: 100%; padding: 8px; margin-top: 5px; border-radius: 8px; border: 1px solid #d4a373; }
         .admin-info { text-align: right; margin-bottom: 20px; }
         .data-table { display: block; overflow-x: auto; }
+        .delete-form { display: inline; }
+        .delete-form button { background: #8B0000; color: white; padding: 6px 12px; border: none; border-radius: 8px; cursor: pointer; font-size: 12px; }
+        .delete-form button:hover { background: #660000; }
     </style>
 </head>
 <body>
@@ -85,7 +93,16 @@ $total_orders = count($orders);
             <div><label>Имя:</label><input type="text" name="name" value="<?= htmlspecialchars($edit_order['name']) ?>" required></div>
             <div><label>Телефон:</label><input type="text" name="phone" value="<?= htmlspecialchars($edit_order['phone']) ?>" required></div>
             <div><label>Email:</label><input type="email" name="email" value="<?= htmlspecialchars($edit_order['email']) ?>"></div>
-            <div><label>Десерт:</label><select name="dessert"><option value="">Выберите</option><option value="chocolate-cake" <?= $edit_order['dessert']=='chocolate-cake'?'selected':'' ?>>Шоколадный торт</option><option value="macarons" <?= $edit_order['dessert']=='macarons'?'selected':'' ?>>Макаруны</option><option value="cupcakes" <?= $edit_order['dessert']=='cupcakes'?'selected':'' ?>>Капкейки</option><option value="red-velvet" <?= $edit_order['dessert']=='red-velvet'?'selected':'' ?>>Красный бархат</option><option value="other" <?= $edit_order['dessert']=='other'?'selected':'' ?>>Другой</option></select></div>
+            <div><label>Десерт:</label>
+                <select name="dessert">
+                    <option value="">Выберите</option>
+                    <option value="chocolate-cake" <?= $edit_order['dessert']=='chocolate-cake'?'selected':'' ?>>Шоколадный торт</option>
+                    <option value="macarons" <?= $edit_order['dessert']=='macarons'?'selected':'' ?>>Макаруны</option>
+                    <option value="cupcakes" <?= $edit_order['dessert']=='cupcakes'?'selected':'' ?>>Капкейки</option>
+                    <option value="red-velvet" <?= $edit_order['dessert']=='red-velvet'?'selected':'' ?>>Красный бархат</option>
+                    <option value="other" <?= $edit_order['dessert']=='other'?'selected':'' ?>>Другой</option>
+                </select>
+            </div>
             <div><label>Дата получения:</label><input type="date" name="date" value="<?= $edit_order['date'] ?>"></div>
             <div><label>Количество персон:</label><input type="number" name="servings" value="<?= $edit_order['servings'] ?>"></div>
             <div><label>Пожелания:</label><textarea name="message" rows="4"><?= htmlspecialchars($edit_order['message']) ?></textarea></div>
@@ -109,7 +126,9 @@ $total_orders = count($orders);
     
     <h2>Все заказы</h2>
     <table class="data-table">
-        <thead><tr><th>ID</th><th>Имя</th><th>Телефон</th><th>Email</th><th>Десерт</th><th>Дата</th><th>Персон</th><th>Пожелания</th><th>Дата заказа</th><th>Действия</th></tr></thead>
+        <thead>
+            <tr><th>ID</th><th>Имя</th><th>Телефон</th><th>Email</th><th>Десерт</th><th>Дата</th><th>Персон</th><th>Пожелания</th><th>Дата заказа</th><th>Действия</th></tr>
+        </thead>
         <tbody>
         <?php foreach ($orders as $order): ?>
         <tr>
@@ -122,7 +141,13 @@ $total_orders = count($orders);
             <td><?= $order['servings'] ?: '-' ?></td>
             <td><?= htmlspecialchars(substr($order['message'] ?? '', 0, 50)) ?>...</td>
             <td><?= $order['created_at'] ?></td>
-            <td><a href="?edit=<?= $order['id'] ?>" class="btn btn-edit">Ред.</a> <a href="?delete=<?= $order['id'] ?>" class="btn btn-delete" onclick="return confirm('Удалить?')">Удалить</a></td>
+            <td>
+                <a href="?edit=<?= $order['id'] ?>" class="btn btn-edit">Ред.</a>
+                <form method="POST" class="delete-form" onsubmit="return confirm('Удалить заказ #<?= $order['id'] ?>?')">
+                    <input type="hidden" name="delete_id" value="<?= $order['id'] ?>">
+                    <button type="submit">Удалить</button>
+                </form>
+            </td>
         </tr>
         <?php endforeach; ?>
         </tbody>
